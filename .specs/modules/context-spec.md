@@ -78,9 +78,9 @@ From `CONTEXT_SYSTEM_GUIDE.md` + `contextscout.md`:
    - Not found → read `paths.json` `global` value. If `false`/missing → local only, no fallback.
    - Else `glob("{global}/core/navigation.md")` → found → use global **only for `core/`** files.
    - Set `{core_root}` = whichever path has core. All other categories (project-intelligence, ui, …) stay local.
-2. **Local always wins** — if a local install exists, global is never consulted.
-3. **Global fallback is ONLY for `core/`** — project-intelligence is never loaded from global.
-4. **custom_dir** — if `paths.json` sets `custom_dir` (e.g. `.context`, `.ai/context`), that replaces the default `.opencode/context/` root.
+2. **Local always wins**: if a local install exists, global is never consulted.
+3. **Global fallback is ONLY for `core/`**: project-intelligence is never loaded from global.
+4. **custom_dir**: if `paths.json` sets `custom_dir` (e.g. `.context`, `.ai/context`), that replaces the default `.opencode/context/` root.
 
 ## 5. paths.json
 
@@ -124,7 +124,7 @@ Optional. Shape:
 <!-- Context: core/standards/code-quality | Priority: critical | Version: 1.2 | Updated: 2026-08-02 -->
 ```
 
-### 7.3 Frontmatter examples (invalid — each must be rejected)
+### 7.3 Frontmatter examples (invalid; each must be rejected)
 
 - `Priority: urgent` (not in {critical, high, medium, low})
 - `Version: x.y` (not semver)

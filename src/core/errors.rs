@@ -3,7 +3,7 @@
 //!
 //! Two-tier error scheme:
 //! - **Envelope** (`ErrorCode`): `E100` parse, `E200` schema, `E300` dangling
-//!   reference, `E400` io, `E500` internal — the reported prefix.
+//!   reference, `E400` io, `E500` internal: the reported prefix.
 //! - **Rule ID** (`rule`): module-specific violation ID (e.g. `AG-202`,
 //!   `CTX-201`, `SK-204`), naming the specific violation.
 //!
@@ -21,15 +21,15 @@ use thiserror::Error;
 /// Category envelope for the two-tier error scheme (cli-spec §7).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorCode {
-    /// E100 — parse errors (frontmatter, MVI lines, JSON).
+    /// E100: parse errors (frontmatter, MVI lines, JSON).
     Parse,
-    /// E200 — schema defects (module rule IDs `XX-2xx`).
+    /// E200: schema defects (module rule IDs `XX-2xx`).
     Schema,
-    /// E300 — dangling references.
+    /// E300: dangling references.
     Reference,
-    /// E400 — I/O errors.
+    /// E400: I/O errors.
     Io,
-    /// E500 — internal errors.
+    /// E500: internal errors.
     Internal,
 }
 

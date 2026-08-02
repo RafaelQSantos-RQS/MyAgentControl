@@ -16,7 +16,7 @@ depends_on: [MAC-MASTER]
 | **Status** | Draft |
 | **Version** | 0.1.0 |
 | **Parent** | [`../../myagentcontrol-spec.md`](../../myagentcontrol-spec.md) |
-| **Source** | <PR #, issue, or user idea — e.g. "mined from OAC PR #123"> |
+| **Source** | <PR #, issue, or user idea; e.g. "mined from OAC PR #123"> |
 
 ---
 
@@ -40,7 +40,7 @@ depends_on: [MAC-MASTER]
 
 ## 5. Design / Approach
 
-[How this maps to the crate layout (cli-spec §6), module spec structure, and the vendored `content/` tree (C6). If it changes `content/`, note that it lands as an intentional in-repo divergence — no upstream re-fetch.]
+[How this maps to the crate layout (cli-spec §6), module spec structure, and the vendored `content/` tree (C6). If it changes `content/`, note that it lands as an intentional in-repo divergence; no upstream re-fetch.]
 
 ## 6. Examples & Scenarios
 

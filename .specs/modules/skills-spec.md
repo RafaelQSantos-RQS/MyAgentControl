@@ -17,7 +17,7 @@ depends_on: [MAC-MASTER, MAC-AG]
 | **Status** | Approved |
 | **Version** | 1.0.0 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
-| **Reference** | Vendored `content/skills/` (plural only; OAC v0.7.1 as starting point). The singular `skill/` tree from OAC was **removed** by user decision (orphaned — the OpenCode runtime only loads `skills/<name>/SKILL.md`; see `NOTICE.md`) |
+| **Reference** | Vendored `content/skills/` (plural only; OAC v0.7.1 as starting point). The singular `skill/` tree from OAC was **removed** by user decision (orphaned; the OpenCode runtime only loads `skills/<name>/SKILL.md`; see `NOTICE.md`) |
 
 ---
 
@@ -25,7 +25,7 @@ depends_on: [MAC-MASTER, MAC-AG]
 
 Skills are self-contained capabilities: a `SKILL.md` (markdown + YAML frontmatter), a `router.sh` bash entrypoint, and optional scripts/workflows. They extend agents with reusable workflows (task management, external docs, context management, personality routing).
 
-## 2. Skill Structure (vendored, `content/skills/` — 4 skills)
+## 2. Skill Structure (vendored, `content/skills/`; 4 skills)
 
 ```
 skills/
@@ -44,7 +44,7 @@ skills/
 
 ## 3. SKILL.md Frontmatter Validation (two tiers)
 
-**OpenCode-official contract (what the runtime enforces — `src/skills/frontmatter.rs`):**
+**OpenCode-official contract (what the runtime enforces via `src/skills/frontmatter.rs`):**
 - SKILL.md starts with YAML frontmatter (`---` delimited); only `name` (required),
   `description` (required), `license`, `compatibility`, `metadata` are recognized;
   **unknown fields are ignored** (OAC's `version`/`author`/`type`/`category`/`tags`
@@ -63,7 +63,7 @@ skills/
   `SK-202` type missing, `SK-203` version not semver, `SK-204` router.sh
   missing/not executable, `SK-205` referenced file missing.
 
-> The vendored `content/skills/` (e.g. `context7`) omits `type`/`category`/`tags` —
+> The vendored `content/skills/` (e.g. `context7`) omits `type`/`category`/`tags`;
 > enforcing the authoring tier on vendored content would break AC-S1 ("pristine
 > passes `validate --skills`"). The OpenCode-official tier is the loadability
 > gate; authoring rules apply to `wizard skill new` output only.
@@ -73,8 +73,8 @@ skills/
 - **SK-1** Validate skill folder structure: SKILL.md present, frontmatter valid (OpenCode tier), router.sh present + executable, referenced files exist.
 - **SK-2** Validate router.sh is a bash script with a `#!/usr/bin/env bash` shebang and that it dispatches the documented subcommands.
 - **SK-3** `init` copies the vendored `content/skills/` tree (C6); validate operates on the real tree.
-- **SK-4** `wizard skill new` — interactive generator: name, description, version, category, tags, subcommands → generates SKILL.md + router.sh skeleton + optional workflow stub (authoring tier enforced on output).
-- **SK-5** `list skills` — table of name, version, category, tags, folder path.
+- **SK-4** `wizard skill new`: interactive generator for name, description, version, category, tags, subcommands → generates SKILL.md + router.sh skeleton + optional workflow stub (authoring tier enforced on output).
+- **SK-5** `list skills`: table of name, version, category, tags, folder path.
 - **SK-6** Cross-check: skills referenced in agent `skill:` permission allowlists exist.
 
 ## 5. Examples & Scenarios

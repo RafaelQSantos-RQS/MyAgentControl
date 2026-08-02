@@ -3,7 +3,7 @@
 //!
 //! The parser is **strict** per context-spec §3.3. The OAC v0.7.1 reference
 //! tree contains a handful of files that legitimately deviate from that rule
-//! (compatibility shims, YAML-frontmatter files, discovery docs) — they are
+//! (compatibility shims, YAML-frontmatter files, discovery docs); they are
 //! tracked in [`KNOWN_EXCEPTIONS`] below (user decision: strict parser +
 //! documented allowlist). Any *other* file the parser rejects is a defect
 //! (or new drift on a future refresh) and fails the test.
@@ -110,7 +110,7 @@ fn every_context_markdown_file_parses() {
         }
     }
 
-    // Every allowlist entry must actually exist and still fail — if upstream
+    // Every allowlist entry must actually exist and still fail. If upstream
     // fixed one, the list is stale and the test tells us to remove it.
     let mut stale: Vec<String> = Vec::new();
     for (rel, reason) in KNOWN_EXCEPTIONS {

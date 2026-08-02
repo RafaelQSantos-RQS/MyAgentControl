@@ -5,7 +5,7 @@
 //! official docs (<https://opencode.ai/docs/skills/>) only these fields are
 //! recognized: `name` (required), `description` (required), `license`
 //! (optional), `compatibility` (optional), `metadata` (optional).
-//! **Unknown frontmatter fields are ignored** — so the OAC tree's extra
+//! **Unknown frontmatter fields are ignored**, so the OAC tree's extra
 //! `version`/`author`/`type`/`category`/`tags` keys are tolerated.
 //!
 //! `name` must be 1–64 chars, lowercase alphanumeric with single hyphen
@@ -14,7 +14,7 @@
 //!
 //! Error codes: `SK-206` missing frontmatter block, `SK-207` YAML parse
 //! error, `SK-208` missing `name`, `SK-209` invalid `name`, `SK-201` name ≠
-//! folder, `SK-210` missing `description`, `SK-211` description length — all
+//! folder, `SK-210` missing `description`, `SK-211` description length, all
 //! wrapped in the `E200 [skills]` envelope (cli-spec §7, §10.3).
 //!
 //! > Spec note (v0.1.1): MAC-SK §3 lists stricter authoring rules
@@ -43,8 +43,8 @@ pub struct SkillFrontmatter {
 
 /// Parse and validate the YAML frontmatter of a `SKILL.md` file.
 ///
-/// - `path` — the SKILL.md path (its parent dir name is the skill folder).
-/// - `content` — the full SKILL.md text.
+/// - `path`: the SKILL.md path (its parent dir name is the skill folder).
+/// - `content`: the full SKILL.md text.
 ///
 /// Returns the typed fields on success, or **all** defects found (SK-2xx) so
 /// callers can aggregate and report every issue at once.
@@ -124,7 +124,7 @@ fn folder_from_path(path: &str) -> Option<String> {
         .map(|n| n.to_string_lossy().into_owned())
 }
 
-/// OpenCode `name` rule: `^[a-z0-9]+(-[a-z0-9]+)*$` — lowercase alnum runs
+/// OpenCode `name` rule: `^[a-z0-9]+(-[a-z0-9]+)*$`, lowercase alnum runs
 /// separated by single hyphens, no leading/trailing hyphen, no `--`.
 fn is_valid_name(s: &str) -> bool {
     if s.is_empty() {
@@ -244,7 +244,7 @@ mod tests {
 
     #[test]
     fn valid_with_unknown_fields_ignored() {
-        // OAC tree carries version/author/type/category/tags — ignored by OpenCode.
+        // OAC tree carries version/author/type/category/tags, ignored by OpenCode.
         let f = ok(
             "content/skills/task-management/SKILL.md",
             "---\nname: task-management\ndescription: Task CLI\ntype: skill\nversion: 1.0.0\ncategory: development\ntags:\n  - cli\n---\n",
@@ -349,7 +349,7 @@ mod tests {
     #[test]
     fn multiple_errors_aggregated() {
         // `description: ` (empty YAML value) deserializes to `None` in
-        // serde-saphyr, so an empty description yields SK-210 (missing) — use
+        // serde-saphyr, so an empty description yields SK-210 (missing); use
         // an over-length description to trigger SK-211 deterministically.
         let long = "d".repeat(1025);
         let errs = errs(

@@ -63,7 +63,7 @@ dependencies:                              # optional
 
 ## 4. Key Command Behaviors (parity content preserved verbatim)
 
-- **`/add-context`**: interactive wizard — 6 questions (tech stack, API example, component example, naming conventions, code standards, security requirements) → `project-intelligence/technical-domain.md`. Critical rules: project_intelligence, frontmatter_required (HTML comment), mvi_compliance (<200 lines), codebase_refs, navigation_update, priority_assignment, version_tracking.
+- **`/add-context`**: interactive wizard; 6 questions (tech stack, API example, component example, naming conventions, code standards, security requirements) → `project-intelligence/technical-domain.md`. Critical rules: project_intelligence, frontmatter_required (HTML comment), mvi_compliance (<200 lines), codebase_refs, navigation_update, priority_assignment, version_tracking.
 - **`/commit`**: pre-commit validation → analyze git status/diff → conventional message with emoji → confirm → commit.
 - **`/test`**: run the project's full testing pipeline and fix failures iteratively.
 
@@ -72,8 +72,8 @@ dependencies:                              # optional
 - **CMD-1** Parse/validate command frontmatter (description, tags, dependencies).
 - **CMD-2** Validate dependency resolution across all three reference spaces (subagent/context/skill); report dangling references with the specific command + dep.
 - **CMD-3** `init` copies the vendored `content/command/` tree (C6); validate operates on the real tree.
-- **CMD-4** `wizard command new` — interactive generator: description, tags, dependencies, workflow steps → command markdown.
-- **CMD-5** `list commands` — table of name, description, tags, dependency count.
+- **CMD-4** `wizard command new`: interactive generator for description, tags, dependencies, workflow steps → command markdown.
+- **CMD-5** `list commands`: table of name, description, tags, dependency count.
 
 ## 6. Examples & Scenarios
 

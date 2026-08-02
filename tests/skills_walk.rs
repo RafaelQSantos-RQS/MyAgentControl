@@ -6,11 +6,11 @@
 //!
 //! There is **no allowlist here**: the vendored tree is the ground truth and
 //! every skill must pass. If a skill fails (or a new one is added that fails),
-//! this test fails — a stricter gate than the context walk, because OpenCode
+//! this test fails; a stricter gate than the context walk, because OpenCode
 //! will not even load an invalid SKILL.md (skills-spec AC-S1).
 //!
-//! This mirrors the parity harness: content is pinned to OAC v0.7.1 and any
-//! adopted-PR skill must satisfy the same rules (CR-001 point 5).
+//! Content is pinned to OAC v0.7.1; any adopted-PR skill must satisfy the
+//! same OpenCode rules.
 
 use std::fs;
 use std::path::PathBuf;

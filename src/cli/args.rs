@@ -1,4 +1,4 @@
-//! CLI argument definitions (clap derive) — cli-spec §3 command surface.
+//! CLI argument definitions (clap derive): cli-spec §3 command surface.
 //!
 //! ```text
 //! myagentcontrol init [--dir .opencode] [--force]
@@ -18,7 +18,7 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
-/// The `myagentcontrol` CLI — manages an `.opencode/`-compatible tree.
+/// The `myagentcontrol` CLI manages an `.opencode/`-compatible tree.
 #[derive(Debug, Parser)]
 #[command(name = "myagentcontrol", version, about)]
 pub struct Cli {

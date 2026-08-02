@@ -1,4 +1,4 @@
-//! CLI dispatch — cli-spec §6 layout, `src/cli/`.
+//! CLI dispatch: cli-spec §6 layout, `src/cli/`.
 //!
 //! Phase 0 skeleton: every subcommand parses and dispatches to a stub
 //! handler that prints a placeholder and returns `Ok`. Real behavior lands
@@ -29,14 +29,14 @@ pub fn run(cli: Cli) -> Result<()> {
     }
 }
 
-/// `init [--dir .opencode] [--force]` — CLI-1.
+/// `init [--dir .opencode] [--force]`: CLI-1.
 fn cmd_init(dir: String, force: bool) -> Result<()> {
     let flag = if force { " --force" } else { "" };
     println!("✔ [stub] init{flag} → would scaffold managed tree into {dir}");
     Ok(())
 }
 
-/// `validate [--agents|--skills|--commands|--context|--evals|--registry|--all]` — CLI-2/CLI-8.
+/// `validate [--agents|--skills|--commands|--context|--evals|--registry|--all]`: CLI-2/CLI-8.
 fn cmd_validate(
     agents: bool,
     skills: bool,
@@ -67,7 +67,7 @@ fn cmd_validate(
     Ok(())
 }
 
-/// `list <agents|skills|commands|context|evals> [--format table|json]` — CLI-3.
+/// `list <agents|skills|commands|context|evals> [--format table|json]`: CLI-3.
 fn cmd_list(target: ListTarget, format: OutputFormat) -> Result<()> {
     let what = match target {
         ListTarget::Agents => "agents",
@@ -84,7 +84,7 @@ fn cmd_list(target: ListTarget, format: OutputFormat) -> Result<()> {
     Ok(())
 }
 
-/// `wizard agent|skill|command new` and `wizard add-context [--update]` — CLI-4.
+/// `wizard agent|skill|command new` and `wizard add-context [--update]`: CLI-4.
 fn cmd_wizard(kind: WizardKind) -> Result<()> {
     let what = match kind {
         WizardKind::Agent(WizardNew {
@@ -104,7 +104,7 @@ fn cmd_wizard(kind: WizardKind) -> Result<()> {
     println_ok(&format!("[stub] wizard {what} new"))
 }
 
-/// `evals validate|dashboard` — deferred `evals run` per evals-spec D1.
+/// `evals validate|dashboard`: deferred `evals run` per evals-spec D1.
 fn cmd_evals(action: EvalsAction) -> Result<()> {
     let what = match action {
         EvalsAction::Validate => "validate",
@@ -113,7 +113,7 @@ fn cmd_evals(action: EvalsAction) -> Result<()> {
     println_ok(&format!("[stub] evals {what}"))
 }
 
-/// `import <path> [--dry-run]` — CLI-5.
+/// `import <path> [--dry-run]`: CLI-5.
 fn cmd_import(path: String, dry_run: bool) -> Result<()> {
     let flag = if dry_run { " --dry-run" } else { "" };
     println_ok(&format!(
@@ -128,7 +128,7 @@ fn cmd_export(path: String) -> Result<()> {
     ))
 }
 
-/// `doctor` — CLI-6.
+/// `doctor`: CLI-6.
 fn cmd_doctor() -> Result<()> {
     println_ok("[stub] doctor → would check paths, opencode presence, structure")
 }

@@ -95,8 +95,8 @@ These come from the markdown bodies and are preserved verbatim in scaffolds:
 - **AG-2** Validate delegation graph: `task:` allowlists in an agent must reference existing subagent names; subagents referenced in any `task` permission must exist.
 - **AG-3** Validate category metadata (`0-category.json`) consistency with directory contents.
 - **AG-4** `init` copies the vendored `content/agent/` tree (C6); validate operates on the real tree.
-- **AG-5** `wizard agent new` — interactive generator producing a spec-compliant agent file (SystemBuilder-style): name, mode, temperature, permissions, delegation allowlist.
-- **AG-6** `list agents` — table of name, mode, category, temperature, description.
+- **AG-5** `wizard agent new`: interactive generator producing a spec-compliant agent file (SystemBuilder-style); name, mode, temperature, permissions, delegation allowlist.
+- **AG-6** `list agents`: table of name, mode, category, temperature, description.
 
 ## 6. Examples & Scenarios
 

@@ -1,7 +1,7 @@
 //! Tree helpers (master decision D8, cli-spec §8).
 //!
 //! These helpers power the **always-on walk tests** (`tests/*_walk.rs`) that
-//! validate the real `content/` tree — there is **no** external reference
+//! validate the real `content/` tree; there is **no** external reference
 //! checkout and no golden diff against upstream (constitution C6).
 //!
 //! - [`collect_relative_paths`] lists every file under a tree (walk tests).
@@ -31,7 +31,7 @@ pub fn copy_tree(src: &Path, dst: &Path) -> io::Result<()> {
 /// All file paths under `root`, relative to it, sorted.
 ///
 /// Paths are relative to `root` at **every** depth (prefixes accumulate during
-/// recursion) — not to the subdirectory where each file was found.
+/// recursion), not to the subdirectory where each file was found.
 pub fn collect_relative_paths(root: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     collect_relative_paths_rec(root, root, &mut out);

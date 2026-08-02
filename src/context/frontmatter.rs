@@ -6,10 +6,10 @@
 //! <!-- Context: {category}/{function} | Priority: {level} | Version: X.Y | Updated: YYYY-MM-DD -->
 //! ```
 //!
-//! - `category` — a path like `core/navigation` or `content-creation/hooks`.
-//! - `priority` — one of `{critical, high, medium, low}` (§3.4).
-//! - `version` — `MAJOR.MINOR` (§3.5); extra numeric components tolerated.
-//! - `updated` — a real calendar date `YYYY-MM-DD`.
+//! - `category`: a path like `core/navigation` or `content-creation/hooks`.
+//! - `priority`: one of `{critical, high, medium, low}` (§3.4).
+//! - `version`: `MAJOR.MINOR` (§3.5); extra numeric components tolerated.
+//! - `updated`: a real calendar date `YYYY-MM-DD`.
 //!
 //! Errors use the two-tier scheme (cli-spec §7): `E200` schema envelope with
 //! module rule IDs `CTX-201..207` and the §10.3 output shape.
@@ -60,7 +60,7 @@ pub struct Version {
 }
 
 impl Version {
-    /// Parse `X.Y` (or `X.Y.Z` — patch tolerated). Rejects letters (`x.y`).
+    /// Parse `X.Y` (or `X.Y.Z`; patch tolerated). Rejects letters (`x.y`).
     fn parse_xy(s: &str) -> Option<Version> {
         let mut parts = s.split('.');
         let major = parts.next()?.parse::<u32>().ok()?;
@@ -224,10 +224,8 @@ pub fn parse(path: &str, content: &str) -> Result<ContextFrontmatter, Vec<Valida
             "missing required field `Updated`",
             None,
         ));
-    }
-
-    // A malformed segment (no `:`) pushes CTX-202 with all fields still `Some`,
-    // so this guard must run before the destructure below.
+    } // A malformed segment (no `:`) pushes CTX-202 with all fields still `Some`;
+    // this guard must run before the destructure below.
     if !errors.is_empty() {
         return Err(errors);
     }
@@ -417,7 +415,7 @@ mod tests {
     #[test]
     fn malformed_segment_with_all_fields_present_is_rejected() {
         // Regression: a segment without `:` pushes CTX-202 while all four
-        // required fields remain Some — the Ok destructure alone would drop
+        // required fields remain Some; the Ok destructure alone would drop
         // the error. The errors guard must run first.
         let errs = fm(
             "ctx.md",

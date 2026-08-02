@@ -10,7 +10,7 @@ depends_on: []
 
 # MyAgentControl — Constitution
 
-> **Immutable rules.** This file is the global, non-negotiable baseline for *every* spec and *every* line of code in this project. It is deliberately short. Changing the constitution requires a full project review and explicit user approval — not a normal spec edit.
+> **Immutable rules.** This file is the global, non-negotiable baseline for *every* spec and *every* line of code in this project. It is deliberately short. Changing the constitution requires a full project review and explicit user approval, not a normal spec edit.
 
 > **Lifecycle note:** the constitution is a special-case artifact, **outside** the feature spec lifecycle (draft → review → approved → …). Its only statuses are `ratified` (in force) and `amended` (after a version bump).
 
@@ -21,11 +21,10 @@ depends_on: []
 | **Updated** | 2026-08-02 |
 
 > **v2.0.0 amendment (2026-08-02, user decision):** the `.specs/` folder was
-> **rebuilt from scratch** (previous specs archived in `.specs-old/`). The
-> project is now defined as *its own vision* of OpenAgentsControl — OAC v0.7.1
-> is the historical **starting point**, not a moving upstream dependency and
-> not a parity yardstick. C6 was rewritten accordingly (no external golden
-> diff against an OAC checkout).
+> **rebuilt from scratch**. The project is now defined as *its own vision* of
+> OpenAgentsControl: OAC v0.7.1 is the historical **starting point**, not a
+> moving upstream dependency and not a parity yardstick. C6 was rewritten
+> accordingly (no external golden diff against an OAC checkout).
 
 > **v2.1.0 amendment (2026-08-02, user decision):** pre-release, spec changes
 > are edited **directly** (with a `version` bump); the Change Request ceremony
@@ -36,7 +35,7 @@ depends_on: []
 
 ## 1. Identity
 
-1. **C1.** The project is `myagentcontrol` — a **Rust reimplementation** in the spirit of [OpenAgentsControl](https://github.com/darrenhinde/OpenAgentsControl) v0.7.1, developed under Spec-Driven Development (SDD). OAC v0.7.1 is the **starting point**; the project evolves as its own version of the framework.
+1. **C1.** The project is `myagentcontrol`, a **Rust reimplementation** in the spirit of [OpenAgentsControl](https://github.com/darrenhinde/OpenAgentsControl) v0.7.1, developed under Spec-Driven Development (SDD). OAC v0.7.1 is the **starting point**; the project evolves as its own version of the framework.
 2. **C2.** License: **MIT**, with attribution to the original OpenAgentsControl project (see `NOTICE.md`).
 
 ## 2. Architecture Non-Negotiables
@@ -44,7 +43,7 @@ depends_on: []
 3. **C3.** The Rust binary is a **configuration manager**: it generates, validates, and maintains the `.opencode/`-compatible structure. It **never** executes agents, calls model APIs, or invokes the OpenCode CLI at runtime. (The `evals run` subcommand is deferred to post-v1.)
 4. **C4.** The managed format is **markdown + YAML frontmatter**, byte-compatible with what OpenCode loads. No proprietary Rust-only config format may be introduced without a constitution amendment.
 5. **C5.** **Model-agnosticism is sacred.** No code, spec, or dependency may assume a single AI vendor. Execution is delegated to the user's chosen CLI (OpenCode), which handles providers.
-6. **C6.** **`content/` is the source of truth.** The full managed tree is vendored in this repository under `content/` and maintained **in-repo**: it is allowed to diverge intentionally from OAC v0.7.1 (adopted PRs, project-specific changes) and is **never re-fetched from upstream**. Structural integrity is machine-checked by **always-on walk tests against the real `content/` tree** — never against an external OAC checkout (D8).
+6. **C6.** **`content/` is the source of truth.** The full managed tree is vendored in this repository under `content/` and maintained **in-repo**: it is allowed to diverge intentionally from OAC v0.7.1 (adopted PRs, project-specific changes) and is **never re-fetched from upstream**. Structural integrity is machine-checked by **always-on walk tests against the real `content/` tree**, never against an external OAC checkout (D8).
 
 ## 3. SDD Process Rules
 

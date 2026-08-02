@@ -8,15 +8,15 @@
 
 ## Approach
 
-1. [Step 1 — e.g. extend the module validator]
-2. [Step 2 — e.g. add walk-test coverage against the real `content/` tree]
-3. [Step 3 — e.g. wire the CLI subcommand]
+1. [Step 1; e.g. extend the module validator]
+2. [Step 2; e.g. add walk-test coverage against the real `content/` tree]
+3. [Step 3; e.g. wire the CLI subcommand]
 
 ## Files touched (expected)
 
 - `src/<module>/…`
 - `tests/<name>_walk.rs` (if content changes)
-- `content/…` (if vendored tree changes — as intentional divergence, C6)
+- `content/…` (if vendored tree changes; as intentional divergence, C6)
 
 ## Testing
 
@@ -28,6 +28,6 @@
 
 ## Checklist (constitution mapping)
 
-- [ ] **C7** — spec approved before implementation
-- [ ] **C10** — acceptance criteria are Given/When/Then, objectively verifiable
-- [ ] **C15** — spec updated first if behavior drifts
+- [ ] **C7**: spec approved before implementation
+- [ ] **C10**: acceptance criteria are Given/When/Then, objectively verifiable
+- [ ] **C15**: spec updated first if behavior drifts

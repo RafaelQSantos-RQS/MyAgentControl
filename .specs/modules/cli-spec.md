@@ -23,7 +23,7 @@ depends_on: [MAC-MASTER, MAC-CTX, MAC-AG, MAC-SK, MAC-CMD, MAC-EV]
 
 ## 1. Purpose
 
-`myagentcontrol` is a single Rust binary (crate `myagentcontrol`, edition 2024) that **manages** the `.opencode/`-compatible configuration: it scaffolds (copies from vendored `content/`), validates, lists, and interactively generates agents, skills, commands, context, and evals. It does **not** execute agents or call the OpenCode CLI at runtime (except the optional `evals run` subcommand — see [`evals-spec.md`](./evals-spec.md)).
+`myagentcontrol` is a single Rust binary (crate `myagentcontrol`, edition 2024) that **manages** the `.opencode/`-compatible configuration: it scaffolds (copies from vendored `content/`), validates, lists, and interactively generates agents, skills, commands, context, and evals. It does **not** execute agents or call the OpenCode CLI at runtime (except the optional `evals run` subcommand; see [`evals-spec.md`](./evals-spec.md)).
 
 ## 2. Binary Name & Distribution
 
@@ -38,7 +38,7 @@ myagentcontrol validate [--agents|--skills|--commands|--context|--evals|--all]
 myagentcontrol list <agents|skills|commands|context|evals> [--format table|json]
 myagentcontrol wizard agent|skill|command new          # interactive generators
 myagentcontrol wizard add-context [--update]           # 6-question Project Intelligence wizard
-myagentcontrol evals validate|dashboard        # (evals run is deferred to post-v1 — see evals-spec)
+myagentcontrol evals validate|dashboard        # (evals run is deferred to post-v1; see evals-spec)
 myagentcontrol import <path-to-oac> [--dry-run]        # import an existing .opencode/ tree
 myagentcontrol export <path>                           # export managed tree to a target dir
 myagentcontrol doctor                                 # check environment (paths, opencode present, structure)
@@ -46,7 +46,7 @@ myagentcontrol doctor                                 # check environment (paths
 
 ## 4. Behavioral Requirements
 
-- **CLI-1** `init` **copies** the vendored `content/` tree (repo top-level, source of truth per C6) to `.opencode/` — **non-destructively and idempotently**: existing files are never overwritten unless `--force`; re-running produces identical results (NFR2 determinism). No template generation.
+- **CLI-1** `init` **copies** the vendored `content/` tree (repo top-level, source of truth per C6) to `.opencode/`, **non-destructively and idempotently**: existing files are never overwritten unless `--force`; re-running produces identical results (NFR2 determinism). No template generation.
 - **CLI-2** `validate` runs module validators (per the module specs) and reports grouped, actionable errors with exit code 1 on any failure; `--all` is the default. Exit 0 = pristine.
 - **CLI-3** `list` renders a table (default) or JSON (`--format json`) for machine consumption.
 - **CLI-4** Wizards are interactive (prompted TTY flow) and produce spec-compliant files that immediately pass `validate`.
@@ -57,8 +57,8 @@ myagentcontrol doctor                                 # check environment (paths
 
 ## 5. Dependencies (decision D11)
 
-- **CLI parsing:** `clap` v4 (derive API — `Parser`, `Subcommand`, `Args`), verified current via context7 `find-docs` (Aug 2026).
-- **YAML parsing (frontmatter/context):** **`serde-saphyr`** — NOT `serde_yaml` (archived/deprecated) nor `serde_yml` (transition shim); see master decision D11. Typed-only: permission maps deserialize as `HashMap<String, HashMap<String, Permission>>`; no `Value` DOM. Escape hatch: `noyalib` (feature `compat-serde-yaml`) if `Value` support is ever needed.
+- **CLI parsing:** `clap` v4 (derive API: `Parser`, `Subcommand`, `Args`), verified current via context7 `find-docs` (Aug 2026).
+- **YAML parsing (frontmatter/context):** **`serde-saphyr`**, not `serde_yaml` (archived/deprecated) nor `serde_yml` (transition shim); see master decision D11. Typed-only: permission maps deserialize as `HashMap<String, HashMap<String, Permission>>`; no `Value` DOM. Escape hatch: `noyalib` (feature `compat-serde-yaml`) if `Value` support is ever needed.
 - **Serialization:** `serde` + `serde_json` (registry, results, category JSONs).
 - **Errors:** `thiserror` (typed errors, E100–E500).
 - **Determinism:** no timestamps embedded by default (NFR2).
@@ -82,7 +82,7 @@ src/
 ## 7. Error Handling & UX
 
 - Typed errors (`thiserror`) with error codes: `E100` parse, `E200` schema, `E300` reference/dangling, `E400` io, `E500` internal. These are the **category envelopes**.
-- **Two-tier error scheme:** each module spec defines its own rule IDs (`XX-2xx`, e.g. `CTX-201`, `AG-202`, `SK-204`, `CMD-201`) which map into the E-envelope by kind — schema defects → `E200`, dangling references → `E300`. The envelope is the reported prefix, the rule ID names the specific violation (see §10.3 example: `E200 [agents] … rule: AG-202`).
+- **Two-tier error scheme:** each module spec defines its own rule IDs (`XX-2xx`, e.g. `CTX-201`, `AG-202`, `SK-204`, `CMD-201`) which map into the E-envelope by kind: schema defects → `E200`, dangling references → `E300`. The envelope is the reported prefix, the rule ID names the specific violation (see §10.3 example: `E200 [agents] … rule: AG-202`).
 - Every validation error includes: file path, line/col where available, rule ID (e.g. `CTX-201`), and a suggestion.
 - Non-interactive mode: when stdin is not a TTY, wizards error out with guidance (or accept `--yes` defaults).
 
@@ -90,7 +90,7 @@ src/
 
 - **Unit tests**: pure functions (frontmatter parsing, MVI line checks, context resolution matrix, permission-map validation, dashboard HTML generation).
 - **Integration tests**: run the binary on a temp scaffolded project; assert exit codes and output.
-- **Walk tests (D8, NFR1)**: `tests/*_walk.rs` validate the **real `content/` tree** (structure, frontmatter, references, inventories) and **always run** — no external checkout, no gitignored dev artifact, no skip logic. Tree helpers come from `src/core/golden.rs` (path collection, copying).
+- **Walk tests (D8, NFR1)**: `tests/*_walk.rs` validate the **real `content/` tree** (structure, frontmatter, references, inventories) and **always run**: no external checkout, no gitignored dev artifact, no skip logic. Tree helpers come from `src/core/golden.rs` (path collection, copying).
 - **Lints**: `cargo clippy -- -D warnings` and `cargo fmt --check` in CI.
 - **CI (future)**: GitHub Actions matrix (linux/macos/windows), `cargo test` + clippy.
 
@@ -102,7 +102,7 @@ These appear in the vendored `content/` tree but have no dedicated module spec. 
 |---|---|
 | `profiles/` (advanced, business, developer, essential, full) | Scaffold folder structure; validate that each profile references existing agents/commands/context |
 | `prompts/` (core, content, data, development) | Scaffold; validate frontmatter/links if present |
-| `tool/` (index.ts, package.json, tsconfig, env/, template/, gemini/) | Scaffold as-is (managed source artifacts — not executed by Rust, per NFR5) |
+| `tool/` (index.ts, package.json, tsconfig, env/, template/, gemini/) | Scaffold as-is (managed source artifacts, not executed by Rust, per NFR5) |
 | `plugin/` (agent-validator.ts, notify.ts, tests/, docs/, package.json) | Scaffold as-is (managed source artifacts) |
 | `plugins/` (coder-verification/) | Scaffold as-is |
 | `docs/` (agents/, guides/, workflows/) | Scaffold as-is |
