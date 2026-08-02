@@ -4,3 +4,4 @@
 //! Task phase1-context-01 ships the [`frontmatter`] parser (CTX-1).
 
 pub mod frontmatter;
+pub mod mvi;

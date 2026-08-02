@@ -4,7 +4,7 @@ type: module-spec
 parent: MAC-MASTER
 title: Context System — Module Spec
 status: approved
-version: 1.0.0
+version: 1.1.0
 updated: 2026-08-02
 change_requests: []
 depends_on: [MAC-MASTER]
@@ -15,7 +15,7 @@ depends_on: [MAC-MASTER]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 1.0.0 |
+| **Version** | 1.1.0 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | Vendored `content/context/` (OAC v0.7.1 as starting point) + `CONTEXT_SYSTEM_GUIDE.md` from the original repo |
 
@@ -44,7 +44,8 @@ context/
 
 ## 3. MVI Rules (must be validated)
 
-1. Files < **200 lines** (scannable < 30s).
+1. Files < **200 lines** (scannable < 30s). Files ≥ 200 lines are classified as
+   **reference docs** and are **exempt** from the MVI formula (user decision).
 2. MVI formula per file: 1–3 sentence concept, 3–5 key points, 5–10 line example, reference link.
 3. All files start with HTML-comment frontmatter:
 
@@ -54,7 +55,12 @@ context/
 
 4. Priority assignment: **critical** (80% usage) > **high** (15%) > **medium** (4%) > **low** (1%).
 5. Version tracking: new file → 1.0; content update → minor; structure change → major.
-6. Files MUST include a "📂 Codebase References" section linking context → actual code.
+6. **Concept cards** (< 200 lines, non-discovery) MUST include a reference section:
+   any of `Codebase References`, `Related Context`, `Related Files`, `Related`,
+   `References`, `Reference`, `Quick Reference`, linking context to related
+   context/code ("any reference section" replaces the literal heading, user decision).
+   Discovery files (`navigation.md`, `index.md`, `README.md`, `CODEBASE_STANDARDS.md`)
+   and reference docs are exempt.
 7. `navigation.md` MUST be updated when files are created/modified (Quick Routes or Deep Dives table).
 
 > **Documented deviations:** the vendored tree contains a few files that do not
@@ -89,7 +95,11 @@ Optional. Shape:
 ## 6. Functional Requirements
 
 - **CTX-1** Parse and validate HTML-comment frontmatter metadata (category, priority, version, updated).
-- **CTX-2** Validate MVI constraints: line count < 200, required sections, navigation registration.
+- **CTX-2** Validate MVI constraints on **concept cards** (< 200 lines, non-discovery):
+  required reference section → `CTX-208`. Files ≥ 200 lines are **reference docs**
+  (exempt); discovery files (`navigation.md`, `index.md`, `README.md`,
+  `CODEBASE_STANDARDS.md`) are exempt from the reference-section rule.
+  (Navigation registration is validated under CTX-4.)
 - **CTX-3** Implement local-first / global-fallback resolution as a pure function (testable without a filesystem by injecting a glob impl).
 - **CTX-4** Validate `navigation.md` cross-references (every listed file exists; every context file is listed or is an index/discovery file).
 - **CTX-5** `init` copies the vendored `content/context/` tree (C6); validate operates on the real tree.
@@ -126,7 +136,7 @@ Optional. Shape:
 Given/When/Then form per constitution C10.
 
 - **AC-C1** Given the vendored `content/context/` tree, **when** `myagentcontrol validate --context` runs, **then** it passes with exit 0 (allowlisted deviations excluded).
-- **AC-C2** Given a context file with a broken priority value, missing frontmatter, >200 lines, or a dangling navigation link, **when** validation runs, **then** each defect is detected with a specific error code (e.g. `CTX-201`).
+- **AC-C2** Given a context file with a broken priority value, missing frontmatter, a concept card missing a reference section, or a dangling navigation link, **when** validation runs, **then** each defect is detected with a specific error code (e.g. `CTX-201`, `CTX-208`).
 - **AC-C3** Given the resolution scenarios in §7.1, **when** the resolver runs with injected glob results, **then** it returns exactly the expected `{core_root}` for all five rows.
 - **AC-C4** Given the `content/context/` tree, **when** the context walk test runs, **then** it validates structure + frontmatter on every file (always-on, no external checkout).
 
