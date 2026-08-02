@@ -2,9 +2,10 @@
 id: MAC-MASTER
 type: master-spec
 title: MyAgentControl — Master Spec
-status: draft
-version: 0.1.0
+status: approved
+version: 0.2.0
 updated: 2026-08-02
+change_requests: [CR-001]
 owner: Rafael (user)
 depends_on: []
 language: en
@@ -15,9 +16,10 @@ license: MIT + attribution to OpenAgentsControl
 
 | | |
 |---|---|
-| **Status** | Draft |
-| **Version** | 0.1.0 |
+| **Status** | Approved |
+| **Version** | 0.2.0 |
 | **Updated** | 2026-08-02 |
+| **Change Request** | [CR-001](./changes/CR-001-cr.md) — Model C content distribution (approved) |
 | **Owner** | Rafael (user) |
 | **Language** | English (per decision) |
 | **License** | MIT + attribution to OpenAgentsControl |
@@ -34,8 +36,8 @@ The user — a Rust enthusiast who uses many different AI models — wants a **f
 
 1. **Feature parity** with OAC v0.7.1: all core agents, subagents, skills, commands, context system, and eval framework.
 2. **Model-agnostic**: never tie the framework to one vendor. Execution happens via the OpenCode CLI (user's chosen backend), which is itself model-agnostic.
-3. **Configuration manager, not a runtime**: the Rust binary generates/validates/maintains the `.opencode/`-compatible structure. It does **not** invoke OpenCode or any model API itself (per user decision).
-4. **Golden-test verifiable**: the generated/validated structure must match the reference repo ([`darrenhinde/OpenAgentsControl`](https://github.com/darrenhinde/OpenAgentsControl), pinned `v0.7.1`) so parity is machine-checked.
+3. **Configuration manager, not a runtime**: the Rust binary scaffolds (copies the vendored `content/` tree per CR-001), validates, and maintains the `.opencode/`-compatible structure. It does **not** invoke OpenCode or any model API itself (per user decision).
+4. **Golden-test verifiable**: the vendored `content/` tree (source of truth) must match the reference repo ([`darrenhinde/OpenAgentsControl`](https://github.com/darrenhinde/OpenAgentsControl), pinned `v0.7.1`) so parity is machine-checked; adopted-PR deltas become approved exceptions via managed divergence (CR-001 point 5).
 5. **Editable & transparent**: agents/skills/commands remain human-editable markdown with YAML frontmatter, exactly like the original.
 6. **Token-efficient MVI context system**: lazy loading, files < 200 lines, local-first resolution.
 7. **Developer-friendly CLI**: `myagentcontrol` binary with init/validate/list/wizard commands.
@@ -69,7 +71,7 @@ The user — a Rust enthusiast who uses many different AI models — wants a **f
 │                    myagentcontrol (Rust binary)              │
 │  init │ validate │ list │ wizard │ evals │ import │ export   │
 └───────────────┬──────────────────────────────────────────────┘
-                │ generates / validates / maintains
+                │ copies from content/ (CR-001) · validates · maintains
                 ▼
 ┌──────────────────────────────────────────────────────────────┐
 │            .opencode/ (markdown + config, OAC-compatible)    │
@@ -86,6 +88,8 @@ The user — a Rust enthusiast who uses many different AI models — wants a **f
 ```
 
 **Key architectural decision (D1):** The Rust binary is a *manager* of the `.opencode/` structure. It does not execute agents. The OpenCode CLI (already installed and used by the user) is the execution backend. This keeps the rewrite scope tractable, keeps the user's existing workflows intact, and preserves model-agnosticism (OpenCode handles providers).
+
+> **CR-001 (Model C):** D1 governs the *execution* axis only. The *distribution* axis is resolved: the full OAC-compatible tree is vendored under the repo-top-level **`content/`** dir (neutral name — not `.opencode/` — reinforcing model-agnosticism, D5), with `NOTICE.md` + `LICENSE` for attribution (D7). `init` copies `content/` → `.opencode/` in the user's project; the destination name is unchanged for OpenCode drop-in compatibility (D3, NFR1).
 
 ## 6. Feature Inventory (from reference repo v0.7.1)
 
@@ -138,14 +142,14 @@ The user — a Rust enthusiast who uses many different AI models — wants a **f
 
 | ID | Status | Context / Decision | Consequences |
 |---|---|---|---|
-| D1 | accepted | Rust binary = config manager; does not call OpenCode. A future `evals run` subcommand that shells out to the OpenCode CLI is explicitly **deferred to post-v1** (user chose "Gerenciador de config" over "Gerenciador + evals em Rust" in the interview) | Easier: tractable scope, no LLM-provider coupling in Rust. Harder: we cannot run evals ourselves until post-v1; depends on the user's OpenCode install for execution |
-| D2 | accepted | Keep agent/skill/command format = markdown + YAML frontmatter | Easier: parity, human-editable, golden-testable. Harder: YAML edge cases must be parsed robustly; schema validation is essential |
+| D1 | accepted | Rust binary = config manager; does not call OpenCode. A future `evals run` subcommand that shells out to the OpenCode CLI is explicitly **deferred to post-v1** (user chose "Gerenciador de config" over "Gerenciador + evals em Rust" in the interview). **CR-001:** D1 covers the *execution* axis only; the *distribution* axis = Model C (vendored tree under `content/`) | Easier: tractable scope, no LLM-provider coupling in Rust. Harder: we cannot run evals ourselves until post-v1; depends on the user's OpenCode install for execution |
+| D2 | accepted | Keep agent/skill/command format = markdown + YAML frontmatter. **CR-001:** format unchanged; the tree is additionally vendored under `content/` as the distribution source of truth | Easier: parity, human-editable, golden-testable. Harder: YAML edge cases must be parsed robustly; schema validation is essential |
 | D3 | accepted | Must read/validate `.opencode/` structure (OAC-compatible) | Easier: drop-in migration for existing OAC users. Harder: must preserve exact byte-level compat (frontmatter, HTML comments, line counts) |
 | D4 | accepted | Rust edition 2024; single binary crate | Easier: modern language features, simple distribution. Harder: no workspace-level reuse if a lib is needed later (revisit via CR) |
 | D5 | accepted | Backend target: OpenCode only | Easier: one backend to reason about. Harder: adding Claude Code or direct APIs later needs a new decision |
 | D6 | accepted | Specs written in English | Easier: open-source friendly, machine-parseable. Harder: owner reviews in a second language |
 | D7 | accepted | License: MIT + attribution to OAC | Easier: legally safe reuse. Harder: must keep attribution headers correct across scaffolds |
-| D8 | accepted | Golden tests against a checkout of [`darrenhinde/OpenAgentsControl`](https://github.com/darrenhinde/OpenAgentsControl) at tag `v0.7.1` | Easier: machine-checked parity. Harder: upgrading the reference requires re-baselining |
+| D8 | accepted | Golden tests against a checkout of [`darrenhinde/OpenAgentsControl`](https://github.com/darrenhinde/OpenAgentsControl) at tag `v0.7.1`. **CR-001:** golden baseline policy gains "approved deltas via adopting CR; re-baseline per this clause" — governs the managed-divergence mechanism | Easier: machine-checked parity. Harder: upgrading the reference requires re-baselining; adopted-PR deltas need CR-tracked exceptions |
 | D9 | accepted | Interactive wizard generators for agents/skills/commands | Easier: SystemBuilder-style DX, spec-compliant output. Harder: TTY interaction must degrade gracefully in CI/non-interactive mode |
 | D10 | accepted | Evals: harness + results JSON + HTML dashboard | Easier: useful feedback loop without running agents. Harder: dashboard HTML generation must be deterministic and dependency-free |
 | D11 | accepted | YAML parsing: use **`serde-saphyr`** — NOT `serde_yaml` (archived/deprecated). Discovered via the context7 `find-docs` skill (Aug 2026): `serde_yaml` has no Context7 entry; the top matches were `serde_yml` (a transition shim whose own docs recommend migrating off it), `noyalib` (drop-in, keeps `Value`), and `serde-saphyr` (typed-only, no `Value`). **Chosen: `serde-saphyr`** (benchmark 87.23 vs 76.74; panic-free, budget limits, zero-copy) because our frontmatter schemas are fully typed and we don't need a dynamic `Value` DOM. Escape hatch: `noyalib` is a drop-in if `Value` support is ever needed | Easier: robust, panic-free, budget-guarded parsing (anti-DoS on 450+ file trees); zero-copy perf; typed schemas fit the validation philosophy. Harder: no `Value`/`Mapping` dynamic DOM (permission maps must be typed as `HashMap<String, HashMap<String, Permission>>`); serde-saphyr is a newer project |
@@ -163,6 +167,7 @@ The user — a Rust enthusiast who uses many different AI models — wants a **f
 
 ### Phase 0 — Foundation (specs approved → skeleton)
 - Cargo project layout, module structure, CLI arg parsing, error types, test harness setup.
+- *(Unchanged by CR-001; content vendoring lands in Phase 1+.)*
 
 ### Phase 1 — Context system (MVI)
 - Parse/validate context files incl. HTML-comment frontmatter, navigation.md, paths.json resolution rules, local-first/global-fallback logic (unit tested).

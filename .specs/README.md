@@ -6,7 +6,7 @@
 
 A rewrite of [OpenAgentsControl (OAC)](https://github.com/darrenhinde/OpenAgentsControl) in **Rust** (`myagentcontrol`).
 
-The original OAC is a model-agnostic AI agent framework (agents, skills, commands, context system, eval harness) distributed as markdown/config files that run on top of the OpenCode CLI. Our Rust version is a **configuration manager**: it generates, validates, and maintains the exact same `.opencode/`-style structure (agents, subagents, skills, commands, context, evals) so users can keep using the OpenCode CLI they already rely on — with feature parity against the original.
+The original OAC is a model-agnostic AI agent framework (agents, skills, commands, context system, eval harness) distributed as markdown/config files that run on top of the OpenCode CLI. Our Rust version is a **configuration manager**: it copies the vendored `content/` tree (source of truth, per [CR-001](./changes/CR-001-cr.md)), validates, and maintains the exact same `.opencode/`-style structure (agents, subagents, skills, commands, context, evals) so users can keep using the OpenCode CLI they already rely on — with feature parity against the original.
 
 ## Spec lifecycle & gating (SDD)
 
@@ -26,6 +26,8 @@ draft → review → approved → in-development → released → deprecated
 | `deprecated` | Superseded; kept for history | No new work |
 
 **Frontmatter gating:** each spec's YAML frontmatter carries `status` and `id` (e.g. `MAC-CTX`). Tools/agents MUST refuse to implement a spec whose `status` is not `approved`.
+
+**Change Request trail:** specs updated via the CR process also carry `change_requests: [<ID>, …]` in their frontmatter (e.g. `[CR-001]`) and a body-table row pointing at the CR file, so the audit trail is machine-readable and human-visible.
 
 ## Change Requests (editing an approved spec)
 
@@ -49,13 +51,13 @@ Approved specs are never edited silently in place (constitution C11). Changes go
 | File | Scope | Status |
 |------|-------|--------|
 | [`constitution.md`](./constitution.md) | Immutable project rules (C1–C15) — changes require amendment | Ratified |
-| [`myagentcontrol-spec.md`](./myagentcontrol-spec.md) | Master spec (MAC-MASTER): vision, goals, architecture, decisions, roadmap | Draft |
-| [`modules/context-spec.md`](./modules/context-spec.md) | Context system (MAC-CTX): MVI, local-first resolution, navigation | Draft |
-| [`modules/agents-spec.md`](./modules/agents-spec.md) | Agents (MAC-AG): core agents, subagents, frontmatter schema, permissions, delegation | Draft |
-| [`modules/skills-spec.md`](./modules/skills-spec.md) | Skills (MAC-SK): project-orchestration, task-management, smart-router, context7, context-manager | Draft |
-| [`modules/commands-spec.md`](./modules/commands-spec.md) | Commands (MAC-CMD): `/add-context`, `/commit`, `/test`, … | Draft |
-| [`modules/evals-spec.md`](./modules/evals-spec.md) | Evals (MAC-EV): YAML cases, results JSON, dashboard | Draft |
-| [`modules/cli-spec.md`](./modules/cli-spec.md) | CLI (MAC-CLI): the Rust binary, commands, validation, golden tests, wizards | Draft |
+| [`myagentcontrol-spec.md`](./myagentcontrol-spec.md) | Master spec (MAC-MASTER): vision, goals, architecture, decisions, roadmap | Approved |
+| [`modules/context-spec.md`](./modules/context-spec.md) | Context system (MAC-CTX): MVI, local-first resolution, navigation | Approved |
+| [`modules/agents-spec.md`](./modules/agents-spec.md) | Agents (MAC-AG): core agents, subagents, frontmatter schema, permissions, delegation | Approved |
+| [`modules/skills-spec.md`](./modules/skills-spec.md) | Skills (MAC-SK): project-orchestration, task-management, smart-router, context7, context-manager | Approved |
+| [`modules/commands-spec.md`](./modules/commands-spec.md) | Commands (MAC-CMD): `/add-context`, `/commit`, `/test`, … | Approved |
+| [`modules/evals-spec.md`](./modules/evals-spec.md) | Evals (MAC-EV): YAML cases, results JSON, dashboard | Approved |
+| [`modules/cli-spec.md`](./modules/cli-spec.md) | CLI (MAC-CLI): the Rust binary, commands, validation, golden tests, wizards | Approved |
 
 ## Spec identification (ID registry)
 

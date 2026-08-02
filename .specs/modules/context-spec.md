@@ -3,7 +3,7 @@ id: MAC-CTX
 type: module-spec
 parent: MAC-MASTER
 title: Context System — Module Spec
-status: draft
+status: approved
 version: 0.1.0
 updated: 2026-08-02
 depends_on: [MAC-MASTER]
@@ -13,7 +13,7 @@ depends_on: [MAC-MASTER]
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Approved |
 | **Version** | 0.1.0 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | OAC repo at tag `v0.7.1`: [`/opencode/context/`](https://github.com/darrenhinde/OpenAgentsControl/tree/v0.7.1/.opencode/context/) + [`CONTEXT_SYSTEM_GUIDE.md`](https://github.com/darrenhinde/OpenAgentsControl/blob/v0.7.1/CONTEXT_SYSTEM_GUIDE.md) |

@@ -3,7 +3,7 @@ id: MAC-AG
 type: module-spec
 parent: MAC-MASTER
 title: Agents — Module Spec
-status: draft
+status: approved
 version: 0.1.0
 updated: 2026-08-02
 depends_on: [MAC-MASTER, MAC-CTX]
@@ -13,7 +13,7 @@ depends_on: [MAC-MASTER, MAC-CTX]
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Approved |
 | **Version** | 0.1.0 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | OAC repo at tag `v0.7.1`: [`/opencode/agent/`](https://github.com/darrenhinde/OpenAgentsControl/tree/v0.7.1/.opencode/agent/) |

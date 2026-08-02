@@ -3,9 +3,10 @@ id: MAC-CLI
 type: module-spec
 parent: MAC-MASTER
 title: CLI Binary — Module Spec
-status: draft
-version: 0.1.0
+status: approved
+version: 0.2.0
 updated: 2026-08-02
+change_requests: [CR-001]
 depends_on: [MAC-MASTER, MAC-CTX, MAC-AG, MAC-SK, MAC-CMD, MAC-EV]
 ---
 
@@ -13,8 +14,9 @@ depends_on: [MAC-MASTER, MAC-CTX, MAC-AG, MAC-SK, MAC-CMD, MAC-EV]
 
 | | |
 |---|---|
-| **Status** | Draft |
-| **Version** | 0.1.0 |
+| **Status** | Approved |
+| **Version** | 0.2.0 |
+| **Change Request** | [CR-001](../changes/CR-001-cr.md) — `init` copies vendored `content/` (Model C) |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | `Cargo.toml` (edition 2024), original `bin/oac.js`, `scripts/` |
 
@@ -45,7 +47,7 @@ myagentcontrol doctor                                 # check environment (paths
 
 ## 4. Behavioral Requirements
 
-- **CLI-1** `init` scaffolds the full managed tree (all modules) **non-destructively and idempotently**: existing files are never overwritten unless `--force`; re-running produces identical results (NFR2 determinism).
+- **CLI-1** `init` **copies** the vendored `content/` tree (repo top-level, source of truth per CR-001) to `.opencode/` — **non-destructively and idempotently**: existing files are never overwritten unless `--force`; re-running produces identical results (NFR2 determinism). No template generation.
 - **CLI-2** `validate` runs module validators (per the module specs) and reports grouped, actionable errors with exit code 1 on any failure; `--all` is the default. Exit 0 = pristine.
 - **CLI-3** `list` renders a table (default) or JSON (`--format json`) for machine consumption.
 - **CLI-4** Wizards are interactive (prompted TTY flow) and produce spec-compliant files that immediately pass `validate`.
@@ -74,9 +76,10 @@ src/
 ├── skills/                  # SK module
 ├── commands/                # CMD module
 ├── evals/                   # EV module (cases, results, dashboard html)
-├── scaffold/                # embedded templates (parity content)
 └── golden/                  # reference-tree golden tests (tests/ dir)
 ```
+
+> **CR-001 (Model C):** parity content is **not** embedded templates. It lives in the repo-top-level **`content/`** dir (vendored OAC v0.7.1 tree, renamed from `.opencode/`), plus `NOTICE.md` + `LICENSE` for attribution (D7). `init` copies from `content/` to `.opencode/`.
 
 ## 7. Error Handling & UX
 
@@ -89,7 +92,7 @@ src/
 
 - **Unit tests**: pure functions (frontmatter parsing, MVI line checks, context resolution matrix, permission-map validation, dashboard HTML generation).
 - **Integration tests**: run the binary on a temp scaffolded project; assert exit codes and output.
-- **Golden tests (D8)**: for each module, scaffold into a temp dir and diff against a checkout of [`darrenhinde/OpenAgentsControl`](https://github.com/darrenhinde/OpenAgentsControl) at tag `v0.7.1` (with `Updated` dates and result artifacts normalized). Golden fixtures are committed under `tests/golden/`.
+- **Golden tests (D8)**: diff the vendored `content/` tree against the **external pinned checkout** of [`darrenhinde/OpenAgentsControl`](https://github.com/darrenhinde/OpenAgentsControl) at tag `v0.7.1` (with `Updated` dates and result artifacts normalized) — **non-self-referential** (CR-001 point 3). Adopted-PR deltas become approved exceptions via managed divergence (CR-001 point 5); re-baseline per D8. Golden fixtures are committed under `tests/golden/`; the Phase 0 fixture slice is kept as a fast unit fixture.
 - **Lints**: `cargo clippy -- -D warnings` and `cargo fmt --check` in CI.
 - **CI (future)**: GitHub Actions matrix (linux/macos/windows), `cargo test` + clippy.
 
