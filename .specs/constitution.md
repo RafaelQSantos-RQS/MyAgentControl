@@ -3,7 +3,7 @@ id: MAC-CONST
 type: constitution
 title: MyAgentControl — Constitution
 status: ratified
-version: 2.0.0
+version: 2.1.0
 updated: 2026-08-02
 depends_on: []
 ---
@@ -17,7 +17,7 @@ depends_on: []
 | | |
 |---|---|
 | **Status** | Ratified |
-| **Version** | 2.0.0 |
+| **Version** | 2.1.0 |
 | **Updated** | 2026-08-02 |
 
 > **v2.0.0 amendment (2026-08-02, user decision):** the `.specs/` folder was
@@ -26,6 +26,11 @@ depends_on: []
 > is the historical **starting point**, not a moving upstream dependency and
 > not a parity yardstick. C6 was rewritten accordingly (no external golden
 > diff against an OAC checkout).
+
+> **v2.1.0 amendment (2026-08-02, user decision):** pre-release, spec changes
+> are edited **directly** (with a `version` bump); the Change Request ceremony
+> applies only to **released** specs (see `README.md` §Change Requests). C11
+> updated to match; the CR trail only starts at v1.
 
 ---
 
@@ -47,7 +52,7 @@ depends_on: []
 8. **C8.** Specs are written in **English**.
 9. **C9.** Specs are **modular**: one master spec + one spec per module. Monolithic single-file specs are forbidden.
 10. **C10.** Acceptance criteria are written in **Given/When/Then** form and must be objectively verifiable (no "fast", "nice", "robust" without a number).
-11. **C11.** Approved specs are edited only via a **Change Request** (see `README.md` §Change Requests), never silently in place.
+11. **C11.** **Released** specs are edited only via a **Change Request** (see `README.md` §Change Requests), never silently in place. **Pre-release (pre-v1)**, specs are still being shaped and are edited directly with a `version` bump (v2.1.0 amendment).
 
 ## 4. Quality Gates
 
@@ -61,11 +66,12 @@ depends_on: []
 Any amendment requires:
 1. A proposal describing the rule to change and its motivation.
 2. Explicit user (owner) approval.
-3. A version bump (`3.0.0`, etc.) and an entry in the Change Log.
+3. A version bump (e.g. `2.1.0`, `3.0.0`) and an entry in the Change Log.
 
 ## 6. Change Log
 
 | Version | Date | Change |
 |---|---|---|
+| 2.1.0 | 2026-08-02 | C11 scoped to **released** specs; pre-release edits are direct (version bump only); CR ceremony starts at v1 (user decision, no-CR pre-release) |
 | 2.0.0 | 2026-08-02 | Full `.specs/` rebuild; C6 rewritten (content/ source of truth, self-referential walk tests, no external OAC parity) |
-| 1.0.0 | 2026-08-02 | Original constitution (archived in `.specs-old/`) |
+| 1.0.0 | 2026-08-02 | Original constitution (superseded by the 2.0.0 rebuild) |

@@ -2,9 +2,9 @@
 
 > **Spec-Driven Development.** This folder is the single source of truth for *what* we are building. Code is written only after a spec exists and is approved. The immutable project rules live in [`constitution.md`](./constitution.md).
 
-> **Rebuilt 2026-08-02 (user decision).** The previous spec set was archived in
-> **[`.specs-old/`](../.specs-old/)** for reference during the transition and will be
-> removed later. This folder is the current, authoritative spec set.
+> **Rebuilt 2026-08-02 (user decision).** The previous spec set was replaced by
+> this one in a single commit. This folder is the current, authoritative spec
+> set.
 
 ## What is this project?
 
@@ -37,7 +37,11 @@ draft → review → approved → in-development → released → deprecated
 
 ## Change Requests (editing an approved spec)
 
-Approved specs are never edited silently in place (constitution C11). Changes go through a lightweight Change Request:
+> **Pre-release note:** while there is no functional release yet (pre-v1),
+> specs are still being shaped; edit them **directly** (bump `version`) without
+> opening a CR. The CR workflow below applies only to **released** specs.
+
+Approved specs are never edited silently in place (constitution C11). Changes to a *released* spec go through a lightweight Change Request:
 
 1. Open a CR (file: `.specs/changes/<id>-cr.md`) describing the change, motivation, and affected spec `id`s.
 2. A mini-review cycle (user reviews the CR).
