@@ -4,8 +4,9 @@ type: module-spec
 parent: MAC-MASTER
 title: Commands — Module Spec
 status: approved
-version: 0.1.0
+version: 1.0.0
 updated: 2026-08-02
+change_requests: []
 depends_on: [MAC-MASTER, MAC-AG, MAC-CTX]
 ---
 
@@ -14,9 +15,9 @@ depends_on: [MAC-MASTER, MAC-AG, MAC-CTX]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 0.1.0 |
+| **Version** | 1.0.0 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
-| **Reference** | OAC repo at tag `v0.7.1`: [`/opencode/command/`](https://github.com/darrenhinde/OpenAgentsControl/tree/v0.7.1/.opencode/command/) |
+| **Reference** | Vendored `content/command/` (OAC v0.7.1 as starting point) |
 
 ---
 
@@ -41,7 +42,7 @@ dependencies:                              # optional
 - `description` required.
 - `dependencies` entries resolve: `subagent:<name>` → must exist in agent tree; `context:<path>` → must exist in context tree (relative to context root); `skill:<name>` → must exist in skills tree.
 
-## 3. Required Command Inventory (parity list)
+## 3. Required Command Inventory (vendored, `content/command/`)
 
 | File | Purpose |
 |---|---|
@@ -70,7 +71,7 @@ dependencies:                              # optional
 
 - **CMD-1** Parse/validate command frontmatter (description, tags, dependencies).
 - **CMD-2** Validate dependency resolution across all three reference spaces (subagent/context/skill); report dangling references with the specific command + dep.
-- **CMD-3** Scaffold all commands above with parity content.
+- **CMD-3** `init` copies the vendored `content/command/` tree (C6); validate operates on the real tree.
 - **CMD-4** `wizard command new` — interactive generator: description, tags, dependencies, workflow steps → command markdown.
 - **CMD-5** `list commands` — table of name, description, tags, dependency count.
 
@@ -99,8 +100,8 @@ dependencies:
 
 Given/When/Then form per constitution C10.
 
-- **AC-M1** Given the pristine reference `command/` tree, **when** `validate --commands` runs, **then** it passes; **when** any §6.2 defect is injected, **then** it fails naming the command and the broken dependency.
-- **AC-M2** Given a scaffolded `command/` tree, **when** compared to the reference, **then** the diff is clean.
+- **AC-M1** Given the vendored `content/command/` tree, **when** `validate --commands` runs, **then** it passes; **when** any §6.2 defect is injected, **then** it fails naming the command and the broken dependency.
+- **AC-M2** Given the `content/command/` tree, **when** the commands walk test runs, **then** every file is validated against the schema (always-on, no external checkout).
 - **AC-M3** Given a wizard-generated command, **when** `validate --commands` runs, **then** it passes immediately.
 
 ## 8. Cross-References

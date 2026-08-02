@@ -4,8 +4,9 @@ type: module-spec
 parent: MAC-MASTER
 title: Agents — Module Spec
 status: approved
-version: 0.1.0
+version: 1.0.0
 updated: 2026-08-02
+change_requests: []
 depends_on: [MAC-MASTER, MAC-CTX]
 ---
 
@@ -14,15 +15,15 @@ depends_on: [MAC-MASTER, MAC-CTX]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 0.1.0 |
+| **Version** | 1.0.0 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
-| **Reference** | OAC repo at tag `v0.7.1`: [`/opencode/agent/`](https://github.com/darrenhinde/OpenAgentsControl/tree/v0.7.1/.opencode/agent/) |
+| **Reference** | Vendored `content/agent/` (OAC v0.7.1 as starting point) |
 
 ---
 
 ## 1. Purpose
 
-Agents are markdown files with YAML frontmatter describing AI personas: their role, temperature, permissions, and delegation rules. Primary agents (`OpenAgent`, `OpenCoder`, `SystemBuilder`, `RepoManager`, `EvalRunner`) orchestrate; subagents are invoked via the `task` tool. The Rust tool must validate this schema with parity and scaffold all agent files.
+Agents are markdown files with YAML frontmatter describing AI personas: their role, temperature, permissions, and delegation rules. Primary agents (`OpenAgent`, `OpenCoder`, `EvalRunner`, `SystemBuilder`, `RepoManager`) orchestrate; subagents are invoked via the `task` tool. The Rust tool must validate this schema and scaffold the vendored tree.
 
 ## 2. Agent File Schema (YAML frontmatter)
 
@@ -61,28 +62,28 @@ permission:
 - Core agents use allowlist-with-deny patterns (`rm -rf *` ask, `sudo *` deny, secrets deny, node_modules/.git deny).
 - Subagents generally deny bash/edit/write; read/grep/glob allow; task/skill allowlists for delegation.
 
-## 3. Required Agent Inventory (parity list)
+## 3. Required Agent Inventory (vendored, `content/agent/`)
 
-| Category | Files |
+| Location | Files |
 |---|---|
-| core (primary) | `openagent.md`, `opencoder.md`, `eval-runner.md` |
-| meta | `system-builder.md`, `repo-manager.md` |
-| subagents/core | `contextscout.md`, `externalscout.md`, `task-manager.md`, `batch-executor.md`, `context-manager.md`, `context-retriever.md`, `documentation.md`, `stage-orchestrator.md` |
-| subagents/code | `coder-agent.md`, `test-engineer.md`, `reviewer.md`, `build-agent.md` |
-| subagents/planning | `architecture-analyzer.md`, `adr-manager.md`, `contract-manager.md`, `prioritization-engine.md`, `story-mapper.md` |
-| subagents/development | `frontend-specialist.md`, `devops-specialist.md` |
-| subagents/system-builder | `agent-generator.md`, `command-creator.md`, `context-organizer.md`, `domain-analyzer.md`, `workflow-designer.md` |
-| subagents/content | `copywriter.md`, `technical-writer.md` |
-| subagents/data | `data-analyst.md` |
-| subagents/utils | `image-specialist.md` |
-| subagents/test | `simple-responder.md` |
-| categories | `0-category.json` (core, development, content, data) |
+| `agent/` (root) | `eval-runner.md` |
+| `agent/core/` | `openagent.md`, `opencoder.md`, `0-category.json` |
+| `agent/meta/` | `repo-manager.md`, `system-builder.md`, `0-category.json` |
+| `agent/content/` | `copywriter.md`, `technical-writer.md`, `0-category.json` |
+| `agent/data/` | `data-analyst.md`, `0-category.json` |
+| `agent/subagents/core/` | `contextscout.md`, `externalscout.md`, `task-manager.md`, `batch-executor.md`, `context-manager.md`, `context-retriever.md`, `documentation.md`, `stage-orchestrator.md` |
+| `agent/subagents/code/` | `coder-agent.md`, `test-engineer.md`, `reviewer.md`, `build-agent.md` |
+| `agent/subagents/planning/` | `architecture-analyzer.md`, `adr-manager.md`, `contract-manager.md`, `prioritization-engine.md`, `story-mapper.md` |
+| `agent/subagents/development/` | `frontend-specialist.md`, `devops-specialist.md`, `0-category.json` |
+| `agent/subagents/system-builder/` | `agent-generator.md`, `command-creator.md`, `context-organizer.md`, `domain-analyzer.md`, `workflow-designer.md` |
+| `agent/subagents/test/` | `simple-responder.md` |
+| `agent/subagents/utils/` | `image-specialist.md` |
 
 ## 4. Behavioral Rules Enforced via Agent Content (documented, not executed by Rust)
 
 These come from the markdown bodies and are preserved verbatim in scaffolds:
 - **approval_gate**: request approval before any bash/write/edit/task; read/list/glob/grep exempt.
-- **critical_context_requirement**: load required context files before code tasks (standards/code-quality.md, etc.).
+- **critical_context_requirement**: load required context files before code tasks.
 - **stop_on_failure** / **report_first**: report → propose → request approval → fix (never auto-fix).
 - **incremental_execution**: one step at a time with validation.
 - **contextscout_exempt**: ContextScout is exempt from approval gates; always use it for discovery first.
@@ -93,7 +94,7 @@ These come from the markdown bodies and are preserved verbatim in scaffolds:
 - **AG-1** Parse and validate agent frontmatter (required fields, enums, permission map structure).
 - **AG-2** Validate delegation graph: `task:` allowlists in an agent must reference existing subagent names; subagents referenced in any `task` permission must exist.
 - **AG-3** Validate category metadata (`0-category.json`) consistency with directory contents.
-- **AG-4** Scaffold the full agent tree from managed templates (parity content).
+- **AG-4** `init` copies the vendored `content/agent/` tree (C6); validate operates on the real tree.
 - **AG-5** `wizard agent new` — interactive generator producing a spec-compliant agent file (SystemBuilder-style): name, mode, temperature, permissions, delegation allowlist.
 - **AG-6** `list agents` — table of name, mode, category, temperature, description.
 
@@ -121,8 +122,8 @@ permission:
 
 Given/When/Then form per constitution C10.
 
-- **AC-A1** Given the pristine reference `agent/` tree, **when** `validate --agents` runs, **then** it passes; **when** any file from §6.2 is injected, **then** it fails with the matching error code and the file path.
-- **AC-A2** Given a scaffolded `agent/` tree, **when** compared to the reference, **then** the diff is clean.
+- **AC-A1** Given the vendored `content/agent/` tree, **when** `validate --agents` runs, **then** it passes; **when** any file from §6.2 is injected, **then** it fails with the matching error code and the file path.
+- **AC-A2** Given the `content/agent/` tree, **when** the agents walk test runs, **then** every file is validated against the schema (always-on, no external checkout).
 - **AC-A3** Given a wizard-generated agent, **when** `validate --agents` runs, **then** it passes immediately.
 - **AC-A4** Given `mode: bogus` or `task: {"ghost-agent": "allow"}`, **when** validation runs, **then** the error names the exact field and offers a suggestion.
 

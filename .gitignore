@@ -29,6 +29,9 @@ target
 .tmp/*
 tmp/*
 
+# Temporary spec archive (2026-08-02 rebuild — reference only, delete later)
+.specs-old/
+
 # Agent skills (community-installed, local-only)
 .agents/
 skills-lock.json

@@ -4,8 +4,9 @@ type: module-spec
 parent: MAC-MASTER
 title: Context System — Module Spec
 status: approved
-version: 0.1.0
+version: 1.0.0
 updated: 2026-08-02
+change_requests: []
 depends_on: [MAC-MASTER]
 ---
 
@@ -14,9 +15,9 @@ depends_on: [MAC-MASTER]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 0.1.0 |
+| **Version** | 1.0.0 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
-| **Reference** | OAC repo at tag `v0.7.1`: [`/opencode/context/`](https://github.com/darrenhinde/OpenAgentsControl/tree/v0.7.1/.opencode/context/) + [`CONTEXT_SYSTEM_GUIDE.md`](https://github.com/darrenhinde/OpenAgentsControl/blob/v0.7.1/CONTEXT_SYSTEM_GUIDE.md) |
+| **Reference** | Vendored `content/context/` (OAC v0.7.1 as starting point) + `CONTEXT_SYSTEM_GUIDE.md` from the original repo |
 
 ---
 
@@ -24,9 +25,9 @@ depends_on: [MAC-MASTER]
 
 The context system is OAC's "secret weapon": project coding standards and patterns stored as markdown, loaded by agents *before* code generation, using the **MVI (Minimal Viable Information)** principle to keep token usage ~80% lower than loading a whole codebase.
 
-Our Rust tool must be able to **generate, validate, and maintain** this tree with full parity, including its metadata conventions (HTML-comment frontmatter, priority levels, versions) and its resolution rules (local-first, global fallback for `core/` only).
+Our Rust tool must be able to **validate and maintain** this tree, including its metadata conventions (HTML-comment frontmatter, priority levels, versions) and its resolution rules (local-first, global fallback for `core/` only). The tree itself is vendored under `content/context/` (source of truth, constitution C6).
 
-## 2. Directory Structure (target parity)
+## 2. Directory Structure (vendored, `content/context/`)
 
 ```
 context/
@@ -34,14 +35,11 @@ context/
 ├── index.md
 ├── CODEBASE_STANDARDS.md
 ├── core/                          # universal standards (standards/, workflows/, task-management/, context-system/)
-│   ├── standards/{code-quality,security-patterns,test-coverage,documentation,project-intelligence}.md
-│   ├── workflows/{design-iteration,task-delegation,external-libraries,code-review}.md
-│   ├── task-management/standards/task-schema.md
-│   └── context-system/standards/{mvi,frontmatter}.md
-├── ui/web/{ui-styling-standards,animation-patterns,react-patterns,design-systems}.md
-├── development/{backend-navigation,ui-navigation,[language-patterns]}.md
-├── project-intelligence/{technical-domain,business-domain,navigation}.md
-├── product/  data/  learning/  content-creation/  system-builder-templates/  openagents-repo/  project/
+├── ui/                            # web styling/animation/react patterns, design systems
+├── development/                   # backend-navigation, ui-navigation, language patterns
+├── project-intelligence/          # technical-domain, business-domain, navigation
+├── product/  data/  learning/  content-creation/  system-builder-templates/
+├── openagents-repo/  project/
 ```
 
 ## 3. MVI Rules (must be validated)
@@ -58,6 +56,12 @@ context/
 5. Version tracking: new file → 1.0; content update → minor; structure change → major.
 6. Files MUST include a "📂 Codebase References" section linking context → actual code.
 7. `navigation.md` MUST be updated when files are created/modified (Quick Routes or Deep Dives table).
+
+> **Documented deviations:** the vendored tree contains a few files that do not
+> follow the §3.3 rule (compatibility-shim comments, YAML `---` frontmatter in
+> some files, concept docs without frontmatter, one `Priority: reference`). The
+> parser stays **strict** per this spec; those files are tracked as a documented
+> allowlist in `tests/context_walk.rs`.
 
 ## 4. Context Resolution Rules (to implement in Rust)
 
@@ -77,8 +81,8 @@ From `CONTEXT_SYSTEM_GUIDE.md` + `contextscout.md`:
 Optional. Shape:
 ```json
 {
-  "custom_dir": ".opencode/context",   // or false
-  "global": "~/.config/opencode"        // or false
+  "custom_dir": ".opencode/context",
+  "global": "~/.config/opencode"
 }
 ```
 
@@ -88,8 +92,8 @@ Optional. Shape:
 - **CTX-2** Validate MVI constraints: line count < 200, required sections, navigation registration.
 - **CTX-3** Implement local-first / global-fallback resolution as a pure function (testable without a filesystem by injecting a glob impl).
 - **CTX-4** Validate `navigation.md` cross-references (every listed file exists; every context file is listed or is an index/discovery file).
-- **CTX-5** Scaffold the full context tree (all categories above) with correct metadata.
-- **CTX-6** Provide `add-context` wizard equivalent (6-question Project Intelligence wizard → `project-intelligence/technical-domain.md`), following the original `/add-context` command rules (project_intelligence, frontmatter_required, mvi_compliance, codebase_refs, navigation_update, priority_assignment, version_tracking).
+- **CTX-5** `init` copies the vendored `content/context/` tree (C6); validate operates on the real tree.
+- **CTX-6** Provide `add-context` wizard equivalent (6-question Project Intelligence wizard → `project-intelligence/technical-domain.md`), following the original `/add-context` command rules.
 - **CTX-7** `--update` mode increments version and refreshes `Updated` date per versioning rules.
 
 ## 7. Examples & Scenarios
@@ -121,10 +125,10 @@ Optional. Shape:
 
 Given/When/Then form per constitution C10.
 
-- **AC-C1** Given the pristine reference tree, **when** `myagentcontrol validate --context` runs, **then** it passes with exit 0.
+- **AC-C1** Given the vendored `content/context/` tree, **when** `myagentcontrol validate --context` runs, **then** it passes with exit 0 (allowlisted deviations excluded).
 - **AC-C2** Given a context file with a broken priority value, missing frontmatter, >200 lines, or a dangling navigation link, **when** validation runs, **then** each defect is detected with a specific error code (e.g. `CTX-201`).
 - **AC-C3** Given the resolution scenarios in §7.1, **when** the resolver runs with injected glob results, **then** it returns exactly the expected `{core_root}` for all five rows.
-- **AC-C4** Given a scaffolded context tree, **when** compared to the reference, **then** the diff is clean with `Updated` dates normalized.
+- **AC-C4** Given the `content/context/` tree, **when** the context walk test runs, **then** it validates structure + frontmatter on every file (always-on, no external checkout).
 
 ## 9. Cross-References
 

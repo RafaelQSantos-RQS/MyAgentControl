@@ -2,11 +2,17 @@
 
 > **Spec-Driven Development.** This folder is the single source of truth for *what* we are building. Code is written only after a spec exists and is approved. The immutable project rules live in [`constitution.md`](./constitution.md).
 
+> **Rebuilt 2026-08-02 (user decision).** The previous spec set was archived in
+> **[`.specs-old/`](../.specs-old/)** for reference during the transition and will be
+> removed later. This folder is the current, authoritative spec set.
+
 ## What is this project?
 
-A rewrite of [OpenAgentsControl (OAC)](https://github.com/darrenhinde/OpenAgentsControl) in **Rust** (`myagentcontrol`).
+A **Rust reimplementation** of [OpenAgentsControl (OAC)](https://github.com/darrenhinde/OpenAgentsControl) — `myagentcontrol`.
 
-The original OAC is a model-agnostic AI agent framework (agents, skills, commands, context system, eval harness) distributed as markdown/config files that run on top of the OpenCode CLI. Our Rust version is a **configuration manager**: it copies the vendored `content/` tree (source of truth, per [CR-001](./changes/CR-001-cr.md)), validates, and maintains the exact same `.opencode/`-style structure (agents, subagents, skills, commands, context, evals) so users can keep using the OpenCode CLI they already rely on — with feature parity against the original.
+OAC is a model-agnostic AI agent framework (agents, skills, commands, context system, eval harness) distributed as markdown/config files that run on top of the OpenCode CLI. `myagentcontrol` is a **configuration manager** written in Rust: it **copies the vendored `content/` tree** (the in-repo source of truth, constitution C6), validates, and maintains the `.opencode/`-style structure so users keep using the OpenCode CLI they already rely on.
+
+**OAC v0.7.1 is the historical starting point — not a moving upstream and not a parity yardstick.** The project evolves as its own vision of the framework: `content/` is maintained in this repository, diverges intentionally (adopted community PRs, project-specific changes), and is **never re-fetched** from upstream.
 
 ## Spec lifecycle & gating (SDD)
 
@@ -27,7 +33,7 @@ draft → review → approved → in-development → released → deprecated
 
 **Frontmatter gating:** each spec's YAML frontmatter carries `status` and `id` (e.g. `MAC-CTX`). Tools/agents MUST refuse to implement a spec whose `status` is not `approved`.
 
-**Change Request trail:** specs updated via the CR process also carry `change_requests: [<ID>, …]` in their frontmatter (e.g. `[CR-001]`) and a body-table row pointing at the CR file, so the audit trail is machine-readable and human-visible.
+**Change Request trail:** specs updated via the CR process also carry `change_requests: [<ID>, …]` in their frontmatter and a body-table row pointing at the CR file.
 
 ## Change Requests (editing an approved spec)
 
@@ -43,25 +49,23 @@ Approved specs are never edited silently in place (constitution C11). Changes go
 1. **Spec** → write/update specs in this folder (`.specs/`)
 2. **Review** → user reviews and approves (status `approved`)
 3. **Develop** → implement from the spec, one module at a time
-4. **Verify** → validate against acceptance criteria + golden tests vs the reference repo
+4. **Verify** → validate against acceptance criteria + walk tests against the real `content/` tree
 5. **Update spec** → keep specs in sync with reality (Spec-Anchored level; spec changes first, C15)
 
 ## Spec index
 
 | File | Scope | Status |
 |------|-------|--------|
-| [`constitution.md`](./constitution.md) | Immutable project rules (C1–C15) — changes require amendment | Ratified |
+| [`constitution.md`](./constitution.md) | Immutable project rules (C1–C15) — changes require amendment | Ratified (v2.0.0) |
 | [`myagentcontrol-spec.md`](./myagentcontrol-spec.md) | Master spec (MAC-MASTER): vision, goals, architecture, decisions, roadmap | Approved |
 | [`modules/context-spec.md`](./modules/context-spec.md) | Context system (MAC-CTX): MVI, local-first resolution, navigation | Approved |
 | [`modules/agents-spec.md`](./modules/agents-spec.md) | Agents (MAC-AG): core agents, subagents, frontmatter schema, permissions, delegation | Approved |
-| [`modules/skills-spec.md`](./modules/skills-spec.md) | Skills (MAC-SK): project-orchestration, task-management, smart-router, context7, context-manager | Approved |
+| [`modules/skills-spec.md`](./modules/skills-spec.md) | Skills (MAC-SK): the four vendored skills, SKILL.md validation, router.sh | Approved |
 | [`modules/commands-spec.md`](./modules/commands-spec.md) | Commands (MAC-CMD): `/add-context`, `/commit`, `/test`, … | Approved |
 | [`modules/evals-spec.md`](./modules/evals-spec.md) | Evals (MAC-EV): YAML cases, results JSON, dashboard | Approved |
-| [`modules/cli-spec.md`](./modules/cli-spec.md) | CLI (MAC-CLI): the Rust binary, commands, validation, golden tests, wizards | Approved |
+| [`modules/cli-spec.md`](./modules/cli-spec.md) | CLI (MAC-CLI): the Rust binary, commands, validation, walk tests, wizards | Approved |
 
 ## Spec identification (ID registry)
-
-Every spec carries a machine-readable `id` in its YAML frontmatter. IDs follow a **semantic scheme**, not sequential numbers — this is the SDD convention for stable *architecture/module specs* (vs. transient *feature specs*, see below).
 
 | ID | Artifact | Purpose |
 |----|----------|---------|
@@ -76,9 +80,9 @@ Every spec carries a machine-readable `id` in its YAML frontmatter. IDs follow a
 
 **Numbering policy:**
 
-- **Architecture/module specs** use semantic IDs (`MAC-<MODULE>`) — stable, descriptive, and immune to renumbering churn. This is the *correct* scheme for specs that describe system parts (verified against Spec Kit / Kiro / Tessl practices).
-- **Future feature specs** (e.g. OAC PRs mined as features) will use **sequential numbers** — `SPEC-001`, `SPEC-002`, … — following Spec Kit's `specs/<n>-<name>/` convention, because features are transient work items (propose → implement → archive). **Location:** `.specs/features/SPEC-001-<name>/` (each feature gets a folder with `spec.md`, plus `plan.md`/`tasks.md` once implementation starts). They deliberately do **not** live at the root or in `modules/` — root is reserved for governance, `modules/` for stable architecture specs. When the first feature spec is created, add it to the Spec index and this registry.
-- **Ready-to-copy template:** `.specs/features/_template/` (Spec Kit–style `spec.md` + `plan.md` + `tasks.md`, adapted to the constitution). Copy the folder, rename `SPEC-XXX` → next number + feature slug, fill the placeholders.
+- **Architecture/module specs** use semantic IDs (`MAC-<MODULE>`) — stable, descriptive, immune to renumbering churn.
+- **Future feature specs** (e.g. OAC PRs mined as features) use **sequential numbers** — `SPEC-001`, `SPEC-002`, … — in `.specs/features/SPEC-001-<name>/` (each feature gets a folder with `spec.md`, plus `plan.md`/`tasks.md` once implementation starts). They deliberately do **not** live at the root or in `modules/`. When the first feature spec is created, add it to the Spec index and this registry.
+- **Ready-to-copy template:** `.specs/features/_template/` — copy the folder, rename `SPEC-XXX` → next number + feature slug, fill the placeholders.
 - Decisions inside specs are numbered separately (`D1`–`D11` in the master ADR table).
 
 **Prefix map** (functional requirements, acceptance criteria, and error rule IDs per module):
@@ -96,54 +100,43 @@ Every spec carries a machine-readable `id` in its YAML frontmatter. IDs follow a
 
 ## File organization rationale
 
-Why three files at the root and the rest in `modules/`?
-
 ```
 .specs/
 ├── README.md               # index, lifecycle, CR process (governance doc)
 ├── constitution.md         # MAC-CONST — immutable rules, global governance
 ├── myagentcontrol-spec.md  # MAC-MASTER — master/steering spec
-└── modules/                # stable architecture specs (one per module)
-    ├── context-spec.md     # MAC-CTX
-    ├── agents-spec.md      # MAC-AG
-    ├── skills-spec.md      # MAC-SK
-    ├── commands-spec.md    # MAC-CMD
-    ├── evals-spec.md       # MAC-EV
-    └── cli-spec.md         # MAC-CLI
+├── modules/                # stable architecture specs (one per module)
+│   ├── context-spec.md     # MAC-CTX
+│   ├── agents-spec.md      # MAC-AG
+│   ├── skills-spec.md      # MAC-SK
+│   ├── commands-spec.md    # MAC-CMD
+│   ├── evals-spec.md       # MAC-EV
+│   └── cli-spec.md         # MAC-CLI
+└── features/_template/     # feature-spec template (SPEC-001, …)
 ```
 
-- **Root = governance & steering:** README (index), constitution (immutable rules, outside the feature lifecycle), and the master spec (goals/architecture/roadmap). This mirrors Spec Kit (`.specify/memory/constitution.md` at root) and Kiro (steering docs) — global rules load first, independent of any single feature.
-- **`modules/` = architecture specs:** each stable system part gets one file (no monolithic spec, small context windows). Genuine *feature* specs (transient work items) will live in `.specs/features/SPEC-001-<name>/` — see the numbering policy above.
-- **Not flattened deliberately:** putting all 9 files in one flat folder would erase the governance-vs-feature separation and force a restructure once `SPEC-001`+ feature specs arrive. For a small project the split reads as "messy" but it is the standard layout — document over restructure.
+- **Root = governance & steering:** README (index), constitution (immutable rules), and the master spec (goals/architecture/roadmap).
+- **`modules/` = architecture specs:** each stable system part gets one file (no monolithic spec, small context windows).
+- **`features/` = transient work items:** mined PRs and one-off features, sequentially numbered.
 
 ## SDD best-practices compliance matrix
-
-How this folder maps to recognized SDD practices (Spec Kit, SPECLAN, MADR, Amazon Kiro, ISO/IEC/IEEE 29148):
 
 | Best practice | Where implemented |
 |---|---|
 | Spec as source of truth; code is derivative | Constitution C7; README lifecycle |
-| Separation of *what* (specs) from *how* (implementation plan) | Master spec goals; module specs keep requirements separate from crate layout (cli-spec §5) |
+| Separation of *what* (specs) from *how* (implementation plan) | Master spec goals; module specs keep requirements separate from crate layout |
 | Structured lifecycle with gating | README lifecycle table + frontmatter `status` |
 | Change Request workflow for approved specs | README §Change Requests |
 | Immutable constitution | `constitution.md` (C1–C15) |
 | Machine-readable frontmatter (`id`, `type`, `status`, `depends_on`) | YAML frontmatter on every spec |
-| Modular, focused spec files | Master + per-module structure (user decision R3Q1) |
+| Modular, focused spec files | Master + per-module structure |
 | Testable acceptance criteria | Given/When/Then in every spec (constitution C10) |
 | Concrete examples & edge cases | "Examples & Scenarios" sections in each module spec |
 | ADRs with context/decision/consequences | Master spec §8 (MADR format) |
 | NFRs with measurable numbers | Master spec §9 (NFR1–NFR6) |
 | In/out scope boundaries | Master spec §3 Non-Goals |
-| Task breakdown per phase | Master spec §10 Roadmap (per-phase tasks) |
+| Task breakdown per phase | Master spec §10 Roadmap |
 | Versioned specs, audit history | Frontmatter `version`/`updated`; git history |
-
-## Reference material
-
-- **Original repo (source of truth):** [`darrenhinde/OpenAgentsControl`](https://github.com/darrenhinde/OpenAgentsControl) — pinned to tag `v0.7.1`. Golden tests and parity checks (D8) diff against a **local checkout** of this tag, e.g.:
-  ```bash
-  git clone --branch v0.7.1 https://github.com/darrenhinde/OpenAgentsControl .tmp/reference/OpenAgentsControl
-  ```
-  (`.tmp/` is gitignored — the checkout is a dev-only artifact, never committed.)
 
 ## Status legend (document body tables)
 

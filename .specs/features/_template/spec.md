@@ -2,134 +2,67 @@
 id: SPEC-XXX
 type: feature-spec
 parent: MAC-MASTER
-title: [Feature Name] — Feature Spec
+title: <Feature Name> — Feature Spec
 status: draft
 version: 0.1.0
 updated: YYYY-MM-DD
 depends_on: [MAC-MASTER]
-source: OAC PR #NNN            # optional — set when mined from the original repo's PRs
 ---
 
-<!--
-  TEMPLATE — copy this folder (or its files) to .specs/features/SPEC-001-<name>/
-  and fill in the placeholders. Replace SPEC-XXX with the next sequential number
-  (SPEC-001, SPEC-002, …). When done, register it in .specs/README.md (Spec index
-  + ID registry). Per constitution C10, all acceptance scenarios MUST be written
-  in Given/When/Then form and be objectively verifiable.
--->
+# <Feature Name> — Feature Spec
 
-# Feature Specification: [FEATURE NAME]
-
-**Feature Branch**: `SPEC-XXX-<feature-name>`
-**Created**: [DATE]
-**Status**: Draft
-**Input**: User description / OAC PR #NNN: "…"
-
-## Summary
-
-[One-paragraph extract: what this feature adds to `myagentcontrol` and why it matters for feature parity with OpenAgentsControl.]
-
-## User Scenarios & Testing *(mandatory)*
-
-<!--
-IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
-Each user story/journey must be INDEPENDENTLY TESTABLE — implementing just ONE of them
-should still yield a viable MVP slice that delivers value.
-Assign priorities (P1, P2, P3, …) where P1 is the most critical. Each story can be:
-- Developed independently
-- Tested independently
-- Demonstrated to users independently
-Per constitution C10, acceptance scenarios are Given/When/Then.
--->
-
-### User Story 1 — [Brief Title] (Priority: P1)
-[Describe this user journey in plain language]
-**Why this priority**: [Explain the value and why it has this priority level]
-**Independent Test**: [How this can be tested independently — e.g. "Can be fully tested by [specific action] and delivers [specific value]"]
-**Acceptance Scenarios**:
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
-2. **Given** [initial state], **When** [action], **Then** [expected outcome]
+| | |
+|---|---|
+| **Status** | Draft |
+| **Version** | 0.1.0 |
+| **Parent** | [`../../myagentcontrol-spec.md`](../../myagentcontrol-spec.md) |
+| **Source** | <PR #, issue, or user idea — e.g. "mined from OAC PR #123"> |
 
 ---
 
-### User Story 2 — [Brief Title] (Priority: P2)
-[Describe this user journey in plain language]
-**Why this priority**: [Explain the value and why it has this priority level]
-**Independent Test**: [Describe how this can be tested independently]
-**Acceptance Scenarios**:
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+## 1. Background & Motivation
 
----
+[One-paragraph extract: what this feature adds to `myagentcontrol` and why it matters. If mined from an OAC PR, describe the original PR's intent and how it maps to the Rust config manager.]
 
-### User Story 3 — [Brief Title] (Priority: P3)
-[Describe this user journey in plain language]
-**Why this priority**: [Explain the value and why it has this priority level]
-**Independent Test**: [Describe how this can be tested independently]
-**Acceptance Scenarios**:
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+## 2. Goals
 
----
+1. [Measurable goal 1]
+2. [Measurable goal 2]
 
-[Add more user stories as needed, each with an assigned priority]
+## 3. Non-Goals
 
-### Edge Cases
+- [Explicitly out of scope]
 
-<!--
-ACTION REQUIRED: Fill out the right edge cases for this feature.
--->
-- What happens when [boundary condition]?
-- How does the system handle [error scenario]?
+## 4. Behavior / Requirements
 
-## Requirements *(mandatory)*
+- **FR-1** [Requirement in imperative form]
+- **FR-2** [Requirement in imperative form]
 
-<!--
-ACTION REQUIRED: Replace with the concrete functional requirements.
--->
+## 5. Design / Approach
 
-### Functional Requirements
+[How this maps to the crate layout (cli-spec §6), module spec structure, and the vendored `content/` tree (C6). If it changes `content/`, note that it lands as an intentional in-repo divergence — no upstream re-fetch.]
 
-- **FR-001**: System MUST [specific capability]
-- **FR-002**: System MUST [specific capability]
-- **FR-003**: Users MUST be able to [key interaction]
-- **FR-004**: System MUST [data requirement]
-- **FR-005**: System MUST [behavior]
+## 6. Examples & Scenarios
 
-*Example of marking unclear requirements:*
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified]
-- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+### 6.1 Happy path
 
-### Key Entities *(include if feature involves data)*
+```text
+[example]
+```
 
-- **[Entity 1]**: [What it represents, key attributes without implementation]
-- **[Entity 2]**: [What it represents, relationships to other entities]
+### 6.2 Edge cases
 
-## Success Criteria *(mandatory)*
+- [edge case 1]
+- [edge case 2]
 
-<!--
-ACTION REQUIRED: Define measurable success criteria. Per constitution C10 these must
-be objectively verifiable — no "fast", "nice" or "robust" without a number.
--->
+## 7. Acceptance Criteria
 
-### Measurable Outcomes
+Given/When/Then form per constitution C10.
 
-- **SC-001**: [Measurable metric, e.g. "validate on a full project completes in < 2s (NFR3)"]
-- **SC-002**: [Measurable metric, e.g. "golden diff vs the OAC reference repo (v0.7.1) is clean (NFR1)"]
-- **SC-003**: [User satisfaction metric]
-- **SC-004**: [Business metric]
+- **SC-001**: Given …, **when** …, **then** … .
+- **SC-002**: Given …, **when** … `cargo test` (incl. walk tests), `cargo clippy -D warnings`, `cargo fmt --check` run, **then** all pass (NFR4).
 
-## Assumptions
+## 8. Cross-References
 
-<!--
-ACTION REQUIRED: Fill in reasonable defaults chosen when the feature description
-did not specify certain details.
--->
-- [Assumption about target users / environment]
-- [Assumption about scope boundaries — what is out of scope for v1]
-- [Assumption about data/environment]
-- [Dependency on existing system/module]
-
-## Cross-References
-
-- Master spec (goals, NFRs, decisions): [`../../myagentcontrol-spec.md`](../../myagentcontrol-spec.md)
-- Module spec(s) this feature touches: [`../../modules/cli-spec.md`](../../modules/cli-spec.md), …
-- Implementation plan: [`plan.md`](./plan.md) · Task breakdown: [`tasks.md`](./tasks.md)
+- Related module spec(s): [`../../modules/<module>-spec.md`](../../modules/<module>-spec.md)
+- Constitution rules: [C#]
