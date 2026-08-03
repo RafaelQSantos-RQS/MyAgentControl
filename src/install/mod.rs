@@ -24,14 +24,14 @@ pub struct Options {
 /// Top-level installer error (cli-spec §7 envelopes, minimal for Brick 1).
 #[derive(Debug, thiserror::Error)]
 pub enum InstallError {
-    /// Registry load/parse failures.
+    /// Registry load/parse failures (E400 io / E100 parse).
     #[error(transparent)]
     Registry(#[from] registry::LoadError),
-    /// Interactive mode requires a terminal (cli-spec D9 note).
-    #[error("E100: interactive installer requires a terminal; run from a TTY")]
+    /// Non-TTY invocation — guidance error, no E-envelope (cli-spec §7/§10.4).
+    #[error("interactive installer requires a terminal; run from a TTY")]
     NotInteractive,
-    /// Prompt/interaction failures (cancelled, I/O, etc.).
-    #[error("E100: {0}")]
+    /// Prompt/interaction failures — guidance error, no E-envelope (§7/§10.4).
+    #[error("{0}")]
     Prompt(String),
 }
 

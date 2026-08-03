@@ -4,7 +4,7 @@ type: module-spec
 parent: MAC-MASTER
 title: CLI Binary — Module Spec
 status: approved
-version: 0.0.2
+version: 0.0.3
 updated: 2026-08-03
 change_requests: []
 depends_on: [MAC-MASTER, MAC-CTX, MAC-AG, MAC-SK, MAC-CMD, MAC-EV, MAC-REG]
@@ -15,10 +15,10 @@ depends_on: [MAC-MASTER, MAC-CTX, MAC-AG, MAC-SK, MAC-CMD, MAC-EV, MAC-REG]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 0.0.2 |
+| **Version** | 0.0.3 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | `Cargo.toml` (edition 2024), vendored `content/` tree, original `bin/oac.js` (repo-root, reference only) |
-| **Note** | Rewritten 2026-08-03 under the format-fidelity principle (C16). `validate` gates on format-declared rules; walk tests validate structure + frontmatter (no navigation cross-reference validation, see context-spec) |
+| **Note** | Rewritten 2026-08-03 under the format-fidelity principle (C16). `validate` gates on format-declared rules; walk tests validate structure + frontmatter (no navigation cross-reference validation, see context-spec). 0.0.3: command renamed `init` → **`install`** (user decision, Brick 1) — the interactive installer mirroring OAC `install.sh`; `--registry <path>` flag added |
 
 ---
 
@@ -34,7 +34,7 @@ depends_on: [MAC-MASTER, MAC-CTX, MAC-AG, MAC-SK, MAC-CMD, MAC-EV, MAC-REG]
 ## 3. Command Surface
 
 ```
-myagentcontrol init [--dir .opencode] [--force] [--profile <name>]
+myagentcontrol install [--dir .opencode] [--registry <path>] [--force] [--profile <name>]
 myagentcontrol validate [--agents|--skills|--commands|--context|--evals|--registry|--all]
 myagentcontrol list <agents|skills|commands|context|evals|registry> [--format table|json]
 myagentcontrol status                                   # manifest vs disk diff (modified/added/removed)
@@ -59,7 +59,7 @@ myagentcontrol doctor                                   # check environment (pat
 
 Markers (C16): `[OAC format]` validates a rule the managed format declares; `[tool DX]` is a user-approved developer-experience feature.
 
-- **CLI-1** `[OAC format]` `init` **copies** the vendored `content/` tree (repo top-level, source of truth per C6) to `.opencode/`, **non-destructively and idempotently**: existing files are never overwritten unless `--force`; re-running produces identical results (NFR2 determinism). No template generation. `--profile <name>` installs the profile's component set per registry-spec REG-10.
+- **CLI-1** `[OAC format]` `install` is the **interactive installer** (mirroring OAC `install.sh`): banner → location → mode → profile/custom → preview → confirm. Confirmed installs **copy** the selected components from the vendored `content/` tree (source of truth per C6) to `.opencode/`, **non-destructively and idempotently**: existing files are never overwritten unless `--force`; re-running produces identical results (NFR2 determinism). No template generation. `--profile <name>` installs the profile's component set per registry-spec REG-10. **Brick 1 status:** the interactive flow (banner/location/mode/profile/custom/preview/confirm) is implemented over the real registry; the actual copy/collision/manifest step is a placeholder until Brick 2.
 - **CLI-2** `[tool DX]` `validate` runs module validators (per the module specs) and reports grouped, actionable errors with exit code 1 on any failure; `--all` is the default. Exit 0 = pristine.
 - **CLI-3** `[tool DX]` `list` renders a table (default) or JSON (`--format json`) for machine consumption.
 - **CLI-4** `[tool DX]` Wizards are interactive (prompted TTY flow) and produce spec-compliant files that immediately pass `validate`.
@@ -87,6 +87,7 @@ Markers (C16): `[OAC format]` validates a rule the managed format declares; `[to
 ```
 src/
 ├── main.rs                  # arg parsing + dispatch
+├── install/                 # interactive installer (Brick 1: TUI; copy lands Brick 2+)
 ├── cli/                     # clap definitions, output formatting (table/json)
 ├── core/                    # shared types, errors (E100–E600), tree helpers (golden.rs)
 ├── context/                 # CTX module (validate/scaffold/resolve/wizard)
@@ -97,14 +98,14 @@ src/
 └── evals/                   # EV module (cases, results, dashboard html)
 ```
 
-> **C6 (distribution):** the managed tree is the vendored **`content/`** dir (440 files, OAC v0.7.1 as starting point) + `NOTICE.md` + `LICENSE`. `init` copies `content/` → `.opencode/`. `src/core/golden.rs` provides tree helpers (path collection, copying) used by the always-on walk tests in `tests/`.
+> **C6 (distribution):** the managed tree is the vendored **`content/`** dir (440 files, OAC v0.7.1 as starting point) + `NOTICE.md` + `LICENSE`. `install` copies `content/` → `.opencode/`. `src/core/golden.rs` provides tree helpers (path collection, copying) used by the always-on walk tests in `tests/`.
 
 ## 7. Error Handling & UX
 
-- Typed errors (`thiserror`) with error codes: `E100` parse, `E200` schema, `E300` reference/dangling, `E400` io, `E500` internal, `E600` registry/install state. These are the **category envelopes**.
+- **E100** parse, **E200** schema, **E300** reference/dangling, **E400** io, **E500** internal, **E600** registry/install state. These are the **category envelopes**.
 - **Two-tier error scheme:** each module spec defines its own rule IDs (`XX-2xx`, e.g. `CTX-201`, `AG-202`, `SK-204`, `CMD-201`) which map into the E-envelope by kind: schema defects → `E200`, dangling references → `E300`. The envelope is the reported prefix, the rule ID names the specific violation (see §10.3 example: `E200 [agents] … rule: AG-202`).
 - Every validation error includes: file path, line/col where available, rule ID (e.g. `CTX-201`), and a suggestion.
-- Non-interactive mode: when stdin is not a TTY, wizards error out with guidance (or accept `--yes` defaults).
+- Non-interactive mode: when stdin is not a TTY, wizards error out with guidance (or accept `--yes` defaults). For the interactive installer, a non-TTY invocation and prompt/interaction failures are **guidance errors** (no E-envelope): they report a plain message and exit 1, per cli-spec §10.4.
 
 ## 8. Testing & Validation Strategy
 
@@ -140,7 +141,7 @@ These appear in the vendored `content/` tree but have no dedicated module spec. 
 ### 10.1 Happy path
 
 ```
-$ myagentcontrol init
+$ myagentcontrol install
 ✔ Scaffolded .opencode/ (440 files)
 $ myagentcontrol validate --all
 ✔ All modules pass
@@ -150,7 +151,7 @@ $ myagentcontrol list agents --format json
 
 ### 10.2 Idempotency
 
-`init` → user edits `opencoder.md` → `init` again → user edit **survives**; no overwrite.
+`install` → user edits `opencoder.md` → `install` again → user edit **survives**; no overwrite.
 
 ### 10.3 Error output shape
 
@@ -160,12 +161,23 @@ E200 [agents] .opencode/agent/core/opencoder.md:12
   hint: use one of: allow, ask, deny
 ```
 
+### 10.4 Non-interactive / prompt guidance (installer)
+
+```
+$ myagentcontrol install < /dev/null
+Error: interactive installer requires a terminal; run from a TTY
+$ echo y | myagentcontrol install
+Error: interactive installer requires a terminal; run from a TTY
+```
+
+These are guidance errors (plain message, exit 1) — **no E-envelope** (see §7).
+
 ## 11. Acceptance Criteria
 
 Given/When/Then form per constitution C10.
 
-- **AC-L1** Given a fresh project, **when** `myagentcontrol init && myagentcontrol validate --all` runs, **then** it exits 0 (self-consistent).
-- **AC-L2** Given a scaffolded tree, **when** `init` runs a second time after a user edit, **then** the tree is identical except the user edit is preserved (no overwrite).
+- **AC-L1** Given a fresh project, **when** `myagentcontrol install && myagentcontrol validate --all` runs, **then** it exits 0 (self-consistent).
+- **AC-L2** Given a scaffolded tree, **when** `install` runs a second time after a user edit, **then** the tree is identical except the user edit is preserved (no overwrite).
 - **AC-L3** Given the vendored `content/` tree, **when** the walk tests run, **then** they pass for all managed modules (always-on, no external checkout).
 - **AC-L4** Given a valid run, **when** `list --format json` emits, **then** the output validates against a committed JSON schema.
 - **AC-L5** Given the codebase, **when** `cargo test`, `cargo clippy -D warnings`, and `cargo fmt --check` run, **then** all pass with zero warnings.

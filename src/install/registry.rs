@@ -18,7 +18,9 @@ pub enum LoadError {
         #[source]
         source: std::io::Error,
     },
-    #[error("E200: invalid registry JSON in {path}: {source}")]
+    /// Parse failure of the registry JSON (E100 = parse error per cli-spec §7;
+    /// "E200" is reserved for schema-validation errors in a later brick).
+    #[error("E100: invalid registry JSON in {path}: {source}")]
     Parse {
         path: String,
         #[source]
@@ -61,13 +63,23 @@ mod tests {
     }
 
     #[test]
-    fn loads_valid_registry() {
+    fn loads_registry_version() {
         let path = temp_registry(
-            "valid",
+            "version",
             r#"{"version":"2.0.0","profiles":{},"components":{}}"#,
         );
         let reg = load(&path).expect("loads");
         assert_eq!(reg.version.as_deref(), Some("2.0.0"));
+        let _ = std::fs::remove_dir_all(path.parent().unwrap());
+    }
+
+    #[test]
+    fn loads_empty_profiles() {
+        let path = temp_registry(
+            "profiles",
+            r#"{"version":"2.0.0","profiles":{},"components":{}}"#,
+        );
+        let reg = load(&path).expect("loads");
         assert!(reg.profiles.is_empty());
         let _ = std::fs::remove_dir_all(path.parent().unwrap());
     }
@@ -82,7 +94,7 @@ mod tests {
     fn malformed_json_is_parse_error() {
         let path = temp_registry("malformed", "{ not json");
         let err = load(&path).unwrap_err();
-        assert!(err.to_string().starts_with("E200"), "got: {err}");
+        assert!(err.to_string().starts_with("E100"), "got: {err}");
         let _ = std::fs::remove_dir_all(path.parent().unwrap());
     }
 }

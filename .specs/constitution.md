@@ -68,7 +68,7 @@ depends_on: []
 
 13. **C12.** Rust code: `cargo test` green, `cargo clippy -- -D warnings` clean, `cargo fmt --check` clean, zero `unsafe` (NFR4).
 14. **C13.** The binary must not require node/bun at runtime (NFR5).
-15. **C14.** `init` is idempotent and non-destructive (NFR2, NFR6).
+15. **C14.** `install` is idempotent and non-destructive (NFR2, NFR6).
 16. **C15.** Specs and code must never drift: when behavior changes, the spec changes first (SDD Spec-Anchored level).
 
 ## 5. Changing This Constitution

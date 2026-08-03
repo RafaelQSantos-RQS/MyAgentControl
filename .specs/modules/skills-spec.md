@@ -75,7 +75,7 @@ Markers (C16): `[OAC format]` validates a rule the skill/OpenCode format declare
 
 - **SK-1** `[OAC format]` Validate skill folder structure: SKILL.md present, frontmatter valid (OpenCode tier), router.sh present + executable, referenced files exist.
 - **SK-2** `[tool DX]` Validate router.sh is a bash script with a `#!/usr/bin/env bash` shebang and that it dispatches the documented subcommands.
-- **SK-3** `[OAC format]` `init` copies the vendored `content/skills/` tree (C6); validate operates on the real tree.
+- **SK-3** `[OAC format]` `install` copies the vendored `content/skills/` tree (C6); validate operates on the real tree.
 - **SK-4** `[tool DX]` `wizard skill new`: interactive generator for name, description, version, category, tags, subcommands → generates SKILL.md + router.sh skeleton + optional workflow stub (authoring tier enforced on output).
 - **SK-5** `[tool DX]` `list skills`: table of name, version, category, tags, folder path.
 - **SK-6** `[tool DX]` Cross-check: skills referenced in agent `skill:` permission allowlists exist.

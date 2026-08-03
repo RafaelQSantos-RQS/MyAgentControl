@@ -74,7 +74,7 @@ Markers (C16): `[OAC format]` validates a rule the command/OpenCode format decla
 
 - **CMD-1** `[OAC format]` Parse/validate command frontmatter (description, tags, dependencies).
 - **CMD-2** `[tool DX]` Validate dependency resolution across all three reference spaces (subagent/context/skill); report dangling references with the specific command + dep. The vendored command tree satisfies this check today (any future defect is fixed in the tree per C16 policy).
-- **CMD-3** `[OAC format]` `init` copies the vendored `content/command/` tree (C6); validate operates on the real tree.
+- **CMD-3** `[OAC format]` `install` copies the vendored `content/command/` tree (C6); validate operates on the real tree.
 - **CMD-4** `[tool DX]` `wizard command new`: interactive generator for description, tags, dependencies, workflow steps → command markdown.
 - **CMD-5** `[tool DX]` `list commands`: table of name, description, tags, dependency count.
 

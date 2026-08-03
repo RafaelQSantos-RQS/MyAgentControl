@@ -17,7 +17,6 @@ use serde::Deserialize;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Registry {
     pub version: Option<String>,
-    pub schema_version: Option<String>,
     /// Profiles keyed by id, in file order (menu display order).
     pub profiles: IndexMap<String, Profile>,
     /// Component buckets, keyed by category name.
@@ -98,32 +97,29 @@ impl Category {
         Category::Config,
     ];
 
+    /// (plural display label, singular `type:` prefix) per bucket — one
+    /// source of truth instead of a repeated 8-arm match.
+    const fn label_and_key(self) -> (&'static str, &'static str) {
+        match self {
+            Category::Agents => ("Agents", "agent"),
+            Category::Subagents => ("Subagents", "subagent"),
+            Category::Commands => ("Commands", "command"),
+            Category::Tools => ("Tools", "tool"),
+            Category::Plugins => ("Plugins", "plugin"),
+            Category::Skills => ("Skills", "skill"),
+            Category::Contexts => ("Contexts", "context"),
+            Category::Config => ("Config", "config"),
+        }
+    }
+
     /// Plural display label (e.g. `Agents`).
     pub fn label(self) -> &'static str {
-        match self {
-            Category::Agents => "Agents",
-            Category::Subagents => "Subagents",
-            Category::Commands => "Commands",
-            Category::Tools => "Tools",
-            Category::Plugins => "Plugins",
-            Category::Skills => "Skills",
-            Category::Contexts => "Contexts",
-            Category::Config => "Config",
-        }
+        self.label_and_key().0
     }
 
     /// Singular `type:` prefix used in `type:id` strings (e.g. `agent`).
     pub fn type_key(self) -> &'static str {
-        match self {
-            Category::Agents => "agent",
-            Category::Subagents => "subagent",
-            Category::Commands => "command",
-            Category::Tools => "tool",
-            Category::Plugins => "plugin",
-            Category::Skills => "skill",
-            Category::Contexts => "context",
-            Category::Config => "config",
-        }
+        self.label_and_key().1
     }
 
     /// The components in this bucket.
@@ -139,13 +135,6 @@ impl Category {
             Category::Contexts => &c.contexts,
             Category::Config => &c.config,
         }
-    }
-}
-
-impl Registry {
-    /// Sum of all component counts across the eight buckets.
-    pub fn total_components(&self) -> usize {
-        Category::ALL.iter().map(|c| c.components(self).len()).sum()
     }
 }
 
@@ -188,12 +177,21 @@ mod tests {
     }"#;
 
     #[test]
-    fn parses_registry_with_profiles_and_components() {
+    fn parses_registry_version() {
         let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
         assert_eq!(reg.version.as_deref(), Some("2.0.0"));
+    }
+
+    #[test]
+    fn parses_profile_count() {
+        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
         assert_eq!(reg.profiles.len(), 2);
+    }
+
+    #[test]
+    fn parses_agents_bucket() {
+        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
         assert_eq!(reg.components.agents.len(), 1);
-        assert_eq!(reg.total_components(), 2); // agents(1) + skills(1), contexts empty
     }
 
     #[test]
@@ -204,22 +202,50 @@ mod tests {
     }
 
     #[test]
-    fn component_optional_fields_default_empty() {
+    fn component_dependencies_default_empty() {
         let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
         let agent = &reg.components.agents[0];
         assert!(agent.dependencies.is_empty());
+    }
+
+    #[test]
+    fn component_files_default_empty() {
+        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
+        let agent = &reg.components.agents[0];
         assert!(agent.files.is_empty());
+    }
+
+    #[test]
+    fn skill_component_files_present() {
+        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
         let skill = &reg.components.skills[0];
         assert_eq!(skill.files.len(), 1);
     }
 
     #[test]
-    fn category_helpers() {
+    fn category_components_returns_agents() {
         let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
         assert_eq!(Category::Agents.components(&reg).len(), 1);
+    }
+
+    #[test]
+    fn category_components_returns_empty_contexts() {
+        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
         assert_eq!(Category::Contexts.components(&reg).len(), 0);
+    }
+
+    #[test]
+    fn category_all_has_eight_buckets() {
         assert_eq!(Category::ALL.len(), 8);
+    }
+
+    #[test]
+    fn category_type_key_is_singular() {
         assert_eq!(Category::Subagents.type_key(), "subagent");
+    }
+
+    #[test]
+    fn category_label_is_plural() {
         assert_eq!(Category::Config.label(), "Config");
     }
 }

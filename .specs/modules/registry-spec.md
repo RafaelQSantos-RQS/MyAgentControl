@@ -4,7 +4,7 @@ type: module-spec
 parent: MAC-MASTER
 title: Component Registry & Install State — Module Spec
 status: approved
-version: 0.0.2
+version: 0.0.3
 updated: 2026-08-03
 change_requests: []
 depends_on: [MAC-MASTER, MAC-CTX, MAC-AG, MAC-SK, MAC-CMD]
@@ -15,10 +15,10 @@ depends_on: [MAC-MASTER, MAC-CTX, MAC-AG, MAC-SK, MAC-CMD]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 0.0.2 |
+| **Version** | 0.0.3 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | OAC v0.7.1 `registry.json`, `packages/cli` (manifest/installer/registry libs), `scripts/registry/`, `install.sh` (profile-based install) |
-| **Note** | Added 2026-08-03 from the OAC feature inventory (gaps G1/G2/G3). The registry is a **JSON manifest over the markdown tree**; validating it is C16-compatible because every rule it checks (paths exist, dependencies resolve, profiles reference existing components) is declared by the registry schema itself |
+| **Note** | Added 2026-08-03 from the OAC feature inventory (gaps G1/G2/G3). The registry is a **JSON manifest over the markdown tree**; validating it is C16-compatible because every rule it checks (paths exist, dependencies resolve, profiles reference existing components) is declared by the registry schema itself. 0.0.3: command renamed `init` → **`install`** (user decision, Brick 1) |
 
 ---
 
@@ -39,7 +39,7 @@ implement IDE-specific adapters (`apply` → `.cursorrules`/`CLAUDE.md`/
 ## 2. Registry Schema (`registry.json`, vendored)
 
 The registry is vendored under `content/registry.json` (source of truth, C6)
-and copied by `init` to `.opencode/../registry.json` or a project-level location
+and copied by `install` to `.opencode/../registry.json` or a project-level location
 managed by the tool (see cli-spec §3).
 
 ```json
@@ -117,7 +117,7 @@ trustworthy and idempotent:
 
 ## 5. Profiles & Install Semantics
 
-- **Install by profile**: `myagentcontrol init --profile developer` installs the
+- **Install by profile**: `myagentcontrol install --profile developer` installs the
   component set named by the profile (see cli-spec §3).
 - **Add a component**: `myagentcontrol add <type>:<id>` installs that component
   plus its transitive dependencies, non-destructively.
@@ -141,7 +141,7 @@ Markers (C16): `[OAC format]` validates a rule the registry schema declares;
 - **REG-7** `[tool DX]` Maintain `.oac/manifest.json`: SHA256 per installed file, type classification, installed-at.
 - **REG-8** `[tool DX]` `status` compares manifest vs disk: report modified, added, and removed files with a diff summary.
 - **REG-9** `[tool DX]` `update` applies bundle changes, preserves user-modified files (backup + report), supports `--check`/dry-run.
-- **REG-10** `[tool DX]` `init --profile <name>` installs a named profile's component set; collision detection on every copy.
+- **REG-10** `[tool DX]` `install --profile <name>` installs a named profile's component set; collision detection on every copy.
 
 ## 7. Examples & Scenarios
 
@@ -173,12 +173,12 @@ Markers (C16): `[OAC format]` validates a rule the registry schema declares;
 Given/When/Then form per constitution C10.
 
 - **AC-R1** Given the vendored `registry.json`, **when** `validate --registry` runs, **then** it passes; **when** any §7.2 defect is injected, **then** it fails with the matching error code and the component id.
-- **AC-R2** Given a fresh project, **when** `init && status` runs, **then** status reports no modifications; **when** the user edits one managed file, **then** status flags exactly that file as modified.
-- **AC-R3** Given a profile, **when** `init --profile <name>` runs, **then** only the profile's component set is installed (plus dependencies) and every copied file is recorded in the manifest.
+- **AC-R2** Given a fresh project, **when** `install && status` runs, **then** status reports no modifications; **when** the user edits one managed file, **then** status flags exactly that file as modified.
+- **AC-R3** Given a profile, **when** `install --profile <name>` runs, **then** only the profile's component set is installed (plus dependencies) and every copied file is recorded in the manifest.
 - **AC-R4** Given an installed tree with a user-modified file, **when** `update` runs, **then** the modified file is preserved (backed up + reported), never silently overwritten.
 
 ## 9. Cross-References
 
 - Registry entries reference all modules → [`context-spec.md`](./context-spec.md), [`agents-spec.md`](./agents-spec.md), [`skills-spec.md`](./skills-spec.md), [`commands-spec.md`](./commands-spec.md)
-- CLI surface: `init --profile`, `add`, `remove`, `status`, `update`, `validate --registry` → [`cli-spec.md`](./cli-spec.md)
+- CLI surface: `install --profile`, `add`, `remove`, `status`, `update`, `validate --registry` → [`cli-spec.md`](./cli-spec.md)
 - Scope of vendoring (registry.json in `content/`) → [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) §6.5

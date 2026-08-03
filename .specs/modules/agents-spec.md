@@ -97,7 +97,7 @@ Markers (C16): `[OAC format]` validates a rule the agent/OpenCode format declare
 - **AG-1** `[OAC format]` Parse and validate agent frontmatter (required fields, enums, permission map structure).
 - **AG-2** `[tool DX]` Validate delegation graph: `task:` allowlists in an agent must reference existing subagent names; subagents referenced in any `task` permission must exist.
 - **AG-3** `[tool DX]` Validate category metadata (`0-category.json`) consistency with directory contents.
-- **AG-4** `[OAC format]` `init` copies the vendored `content/agent/` tree (C6); validate operates on the real tree.
+- **AG-4** `[OAC format]` `install` copies the vendored `content/agent/` tree (C6); validate operates on the real tree.
 - **AG-5** `[tool DX]` `wizard agent new`: interactive generator producing a spec-compliant agent file (SystemBuilder-style); name, mode, temperature, permissions, delegation allowlist.
 - **AG-6** `[tool DX]` `list agents`: table of name, mode, category, temperature, description.
 

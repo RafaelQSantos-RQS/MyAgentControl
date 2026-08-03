@@ -5,8 +5,9 @@
 //! (copy/collision/manifest land in Brick 2+). Menus are fed by the real
 //! registry ([`model::Registry`]) so the interface is faithful from day one.
 //!
-//! All menu logic is small, testable functions; the dialoguer calls are
-//! isolated in [`select`]/[`prompt_err`] so the rest is unit-testable.
+//! The pure helpers ([`preview_lines`], [`resolve_install_dir`]) are
+//! unit-tested; the dialoguer-driven flows are exercised end-to-end via a
+//! pseudo-TTY integration run (see the validation notes in the task).
 
 use console::{Term, style};
 use dialoguer::{Confirm, Input, MultiSelect, Select};
@@ -14,9 +15,10 @@ use dialoguer::{Confirm, Input, MultiSelect, Select};
 use crate::install::model::{Category, Component, Registry};
 use crate::install::{InstallError, Options, Result};
 
-/// True when stdin/stdout is an interactive terminal (cli-spec D9 note).
+/// True when stdin is an interactive terminal (cli-spec §7/§10.4: the
+/// installer errors out with guidance when stdin is not a TTY).
 pub fn is_interactive() -> bool {
-    Term::stderr().is_term() && console::user_attended()
+    Term::stdout().is_term() && console::user_attended()
 }
 
 /// The installation location selected by the user.
@@ -25,7 +27,6 @@ enum Location {
     Local,
     Global,
     Custom(String),
-    Exit,
 }
 
 /// The installation mode selected by the user.
@@ -52,23 +53,20 @@ pub fn run(registry: &Registry, options: &Options) -> Result<()> {
     }
 
     banner();
-    let location = choose_location()?;
-    if location == Location::Exit {
-        return Ok(());
-    }
+    let location = match choose_location()? {
+        Some(loc) => loc,
+        None => return Ok(()), // user chose "Exit" in the location menu
+    };
     let install_dir = resolve_install_dir(&location, options);
 
     loop {
         match choose_mode()? {
             Mode::Profile => {
                 let profile_key = choose_profile(registry)?;
-                let selection = registry
-                    .profiles
-                    .get(&profile_key)
-                    .expect("choose_profile returns a real key")
-                    .components
-                    .clone();
-                if preview_and_confirm(&install_dir, &profile_key, &selection)? {
+                let profile = registry.profiles.get(&profile_key).ok_or_else(|| {
+                    InstallError::Prompt(format!("unknown profile {profile_key:?}"))
+                })?;
+                if preview_and_confirm(&install_dir, &profile_key, &profile.components)? {
                     placeholder_install(&install_dir);
                 }
                 return Ok(());
@@ -113,7 +111,8 @@ fn banner() {
 }
 
 /// Step 1 — installation location (OAC `show_install_location_menu`).
-fn choose_location() -> Result<Location> {
+/// Returns `None` when the user chooses "Exit".
+fn choose_location() -> Result<Option<Location>> {
     let items = [
         "Local   — install to .opencode/ in the current directory".to_string(),
         "Global  — install to ~/.config/opencode".to_string(),
@@ -121,17 +120,17 @@ fn choose_location() -> Result<Location> {
         "Exit".to_string(),
     ];
     match select("Choose installation location:", &items, 0)? {
-        0 => Ok(Location::Local),
-        1 => Ok(Location::Global),
+        0 => Ok(Some(Location::Local)),
+        1 => Ok(Some(Location::Global)),
         2 => {
             let path = Input::<String>::new()
                 .with_prompt("Enter installation path")
                 .allow_empty(false)
                 .interact_text()
                 .map_err(prompt_err)?;
-            Ok(Location::Custom(path))
+            Ok(Some(Location::Custom(path)))
         }
-        _ => Ok(Location::Exit),
+        _ => Ok(None),
     }
 }
 
@@ -312,7 +311,6 @@ fn resolve_install_dir(location: &Location, options: &Options) -> String {
             format!("{home}/.config/opencode")
         }
         Location::Custom(path) => path.clone(),
-        Location::Exit => options.dir.clone(),
     }
 }
 
@@ -365,11 +363,23 @@ mod tests {
         ];
         let lines = preview_lines(&sel);
         assert_eq!(lines.len(), 2);
+    }
+
+    #[test]
+    fn preview_lines_joins_same_type_ids() {
+        let sel = vec!["agent:openagent".to_string(), "agent:opencoder".to_string()];
+        let lines = preview_lines(&sel);
         assert!(
             lines
                 .iter()
                 .any(|l| l == "  agent (2): openagent, opencoder")
         );
+    }
+
+    #[test]
+    fn preview_lines_lists_singleton_type() {
+        let sel = vec!["context:essential-patterns".to_string()];
+        let lines = preview_lines(&sel);
         assert!(
             lines
                 .iter()
@@ -390,21 +400,44 @@ mod tests {
     }
 
     #[test]
-    fn category_helpers_match_counts() {
+    fn category_helpers_count_agents() {
         let reg = fixture_registry();
         assert_eq!(Category::Agents.components(&reg).len(), 1);
+    }
+
+    #[test]
+    fn category_helpers_count_subagents() {
+        let reg = fixture_registry();
         assert_eq!(Category::Subagents.components(&reg).len(), 1);
+    }
+
+    #[test]
+    fn category_helpers_empty_contexts() {
+        let reg = fixture_registry();
         assert_eq!(Category::Contexts.components(&reg).len(), 0);
+    }
+
+    #[test]
+    fn category_helpers_first_agent_id() {
+        let reg = fixture_registry();
         assert_eq!(Category::Agents.components(&reg)[0].id, "openagent");
     }
 
     #[test]
-    fn resolve_install_dir_local_and_custom() {
+    fn resolve_install_dir_local() {
         let opts = Options {
             dir: ".opencode".to_string(),
             registry_path: std::path::PathBuf::from("content/registry.json"),
         };
         assert_eq!(resolve_install_dir(&Location::Local, &opts), ".opencode");
+    }
+
+    #[test]
+    fn resolve_install_dir_custom() {
+        let opts = Options {
+            dir: ".opencode".to_string(),
+            registry_path: std::path::PathBuf::from("content/registry.json"),
+        };
         assert_eq!(
             resolve_install_dir(&Location::Custom("/tmp/x".to_string()), &opts),
             "/tmp/x"
