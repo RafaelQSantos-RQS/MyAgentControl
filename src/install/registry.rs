@@ -1,8 +1,5 @@
 //! Registry loading (registry-spec §4): read and parse the vendored
 //! `content/registry.json` into the typed [`model::Registry`].
-//!
-//! Pure loading + parsing; the TUI and later bricks consume the result.
-//! Errors are explicit ([`LoadError`]) — no panics.
 
 use std::fs;
 use std::path::Path;
@@ -18,8 +15,8 @@ pub enum LoadError {
         #[source]
         source: std::io::Error,
     },
-    /// Parse failure of the registry JSON (E100 = parse error per cli-spec §7;
-    /// "E200" is reserved for schema-validation errors in a later brick).
+    /// Parse failure of the registry JSON (E100; "E200" reserved for schema
+    /// validation in a later stage).
     #[error("E100: invalid registry JSON in {path}: {source}")]
     Parse {
         path: String,

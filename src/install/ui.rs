@@ -1,13 +1,6 @@
-//! Interactive installer TUI (Brick 1). Mirrors the OAC `install.sh` flow:
-//! banner → location → mode → (profile | custom) → preview → confirm.
-//!
-//! **No real install logic yet**: after confirmation we show a placeholder
-//! (copy/collision/manifest land in Brick 2+). Menus are fed by the real
-//! registry ([`model::Registry`]) so the interface is faithful from day one.
-//!
-//! The pure helpers ([`preview_lines`], [`resolve_install_dir`]) are
-//! unit-tested; the dialoguer-driven flows are exercised end-to-end via a
-//! pseudo-TTY integration run (see the validation notes in the task).
+//! Interactive installer TUI: banner → location → mode →
+//! (profile | custom) → preview → confirm. Menus are fed by the real
+//! registry ([`model::Registry`]); real install logic lands later.
 
 use console::{Term, style};
 use dialoguer::theme::Theme;
@@ -16,8 +9,20 @@ use dialoguer::{Confirm, Input, MultiSelect, Select};
 use crate::install::model::{Category, Component, Registry};
 use crate::install::{InstallError, Options, Result};
 
-/// True when stdin is an interactive terminal (cli-spec §7/§10.4: the
-/// installer errors out with guidance when stdin is not a TTY).
+/// Dracula accent colors, fixed truecolor so the TUI looks the same
+/// regardless of the terminal theme (ANSI 16 slots vary per terminal).
+mod palette {
+    use console::Color;
+
+    /// Active items and category headers.
+    pub const PURPLE: Color = Color::TrueColor(0xBD, 0x93, 0xF9);
+    /// Success messages.
+    pub const GREEN: Color = Color::TrueColor(0x50, 0xFA, 0x7B);
+    /// Muted/secondary text.
+    pub const MUTED: Color = Color::TrueColor(0x62, 0x72, 0xA4);
+}
+
+/// True when stdin is an interactive terminal.
 pub fn is_interactive() -> bool {
     Term::stdout().is_term() && console::user_attended()
 }
@@ -56,7 +61,7 @@ pub fn run(registry: &Registry, options: &Options) -> Result<()> {
     banner();
     let location = match choose_location()? {
         Some(loc) => loc,
-        None => return Ok(()), // user chose "Exit" in the location menu
+        None => return Ok(()),
     };
     let install_dir = resolve_install_dir(&location, options);
 
@@ -79,17 +84,13 @@ pub fn run(registry: &Registry, options: &Options) -> Result<()> {
                 }
                 return Ok(());
             }
-            Mode::List => {
-                list_components(registry)?;
-                // back to mode menu
-            }
+            Mode::List => list_components(registry)?,
             Mode::Exit => return Ok(()),
         }
     }
 }
 
-/// ASCII banner, matching the OAC installer header, centered on the
-/// terminal width.
+/// ASCII banner, centered on the terminal width.
 fn banner() {
     const ART: &str = "
 ███╗   ███╗██╗   ██╗     █████╗  ██████╗ ███████╗███╗   ██╗████████╗
@@ -110,9 +111,8 @@ fn banner() {
     let term = Term::stderr();
     // `Term::size()` returns (rows, cols).
     let (_, cols) = term.size();
-    // The ART lines differ in width (fmt strips their trailing padding), so
-    // normalize them to the widest line, then center the whole block with
-    // one shared pad. Centering per-line would misalign the artwork.
+    // ART lines differ in width (fmt strips trailing padding); normalize to
+    // the widest line so the whole block centers with one shared pad.
     let art_lines: Vec<&str> = ART.lines().filter(|l| !l.trim().is_empty()).collect();
     let art_width = art_lines
         .iter()
@@ -122,7 +122,7 @@ fn banner() {
     let pad = (cols as usize).saturating_sub(art_width) / 2;
     for line in art_lines {
         let padded = format!("{}{:<pad$}", " ".repeat(pad), line, pad = art_width);
-        let _ = term.write_line(&style(padded).cyan().bold().to_string());
+        let _ = term.write_line(&style(padded).bold().for_stderr().to_string());
     }
     let _ = term.write_line("");
 }
@@ -213,7 +213,6 @@ fn wrap(text: &str, width: usize) -> String {
 /// Step 3b — custom component selection (OAC `show_custom_menu` + component
 /// selection). Returns selected `type:id` strings.
 fn choose_custom(registry: &Registry) -> Result<Vec<String>> {
-    // Category multi-select.
     let cat_items: Vec<String> = Category::ALL
         .iter()
         .map(|c| format!("{} ({})", c.label(), c.components(registry).len()))
@@ -225,8 +224,8 @@ fn choose_custom(registry: &Registry) -> Result<Vec<String>> {
         .interact()
         .map_err(prompt_err)?;
 
-    // Component multi-select across the chosen categories. Each entry maps
-    // back to (category, index-in-category) so we can resolve the real id.
+    // Each entry maps back to (category, index) so the real id can be
+    // resolved after selection.
     let mut picks: Vec<(Pick, String)> = Vec::new();
     for ci in cat_indices {
         let cat = Category::ALL[ci];
@@ -304,19 +303,21 @@ fn preview_lines(selection: &[String]) -> Vec<String> {
         .collect()
 }
 
-/// Step 5 placeholder — real install lands in Brick 2+.
+/// Step 5 placeholder — real install lands in a later stage.
 fn placeholder_install(dir: &str) {
     let term = Term::stderr();
     let _ = term.write_line("");
     let _ = term.write_line(
-        &style("✔ Ready to install — copy step lands in the next brick.")
-            .green()
+        &style("✔ Ready to install — copy step lands in the next stage.")
+            .fg(palette::GREEN)
+            .for_stderr()
             .to_string(),
     );
     let _ = term.write_line(&format!("  Target: {dir}"));
     let _ = term.write_line(
-        &style("  (Nothing was written; the interactive flow is the point of this brick.)")
-            .dim()
+        &style("  (Nothing was written; the interactive flow is the point.)")
+            .fg(palette::MUTED)
+            .for_stderr()
             .to_string(),
     );
 }
@@ -332,7 +333,8 @@ fn list_components(registry: &Registry) -> Result<()> {
         }
         let _ = term.write_line(
             &style(format!("{} ({}):", cat.label(), comps.len()))
-                .cyan()
+                .fg(palette::PURPLE)
+                .for_stderr()
                 .to_string(),
         );
         for comp in comps {
@@ -356,10 +358,9 @@ fn resolve_install_dir(location: &Location, options: &Options) -> String {
     }
 }
 
-/// Dialoguer theme for the installer menus: colored prompts (no trailing
-/// colon — the prompt strings already include it) and multi-line select
-/// items where the first line is the option name and following lines are
-/// its description.
+/// Dialoguer theme: bold prompts (no trailing colon — prompt strings already
+/// include it), purple active items, multi-line items whose first line is
+/// the option name and following lines its description.
 #[derive(Debug, Clone, Copy)]
 struct InstallerTheme;
 
@@ -374,8 +375,7 @@ impl Theme for InstallerTheme {
         prompt: &str,
         sel: &str,
     ) -> std::fmt::Result {
-        // `sel` may be a multi-line item; keep only its first line in the
-        // collapsed confirmation line. The prompt already ends with ':'.
+        // Keep only the first line of a multi-line item in the collapsed line.
         let head = sel.split('\n').next().unwrap_or(sel);
         write!(f, "{} {}", style(prompt).bold().for_stderr(), head)
     }
@@ -390,15 +390,15 @@ impl Theme for InstallerTheme {
         let head = lines.next().unwrap_or_default();
         let rest = lines.next();
         if active {
-            write!(f, "{} ", style(">").cyan().bold().for_stderr())?;
-            write!(f, "{}", style(head).cyan().bold().for_stderr())?;
+            write!(f, "{} ", style(">").fg(palette::PURPLE).bold().for_stderr())?;
+            write!(f, "{}", style(head).fg(palette::PURPLE).bold().for_stderr())?;
         } else {
             write!(f, "  {}", style(head).for_stderr())?;
         }
         if let Some(desc) = rest {
             for line in desc.lines() {
                 writeln!(f)?;
-                write!(f, "    {}", style(line).dim().for_stderr())?;
+                write!(f, "    {}", style(line).fg(palette::MUTED).for_stderr())?;
             }
         }
         Ok(())

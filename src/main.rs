@@ -14,7 +14,7 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    /// Interactive installer (OAC install.sh flow, Brick 1: TUI only).
+    /// Interactive installer (TUI only).
     Install(InstallArgs),
 }
 

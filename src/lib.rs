@@ -3,8 +3,8 @@
 //! Exposes the modules the binary uses so integration tests in `tests/`
 //! can import them. `src/main.rs` is a thin wrapper over [`install::run`].
 //!
-//! Brick 1: interactive installer TUI (mirrors OAC `install.sh`). No real
-//! install logic yet — only the interactive interface over the real
-//! `content/registry.json` data.
+//! Interactive installer TUI (mirrors OAC `install.sh`): the interactive
+//! interface over the real `content/registry.json` data. No real install
+//! logic yet.
 
 pub mod install;

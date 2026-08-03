@@ -1,13 +1,7 @@
 //! Registry data model (registry-spec §3): serde types for the OAC
 //! `registry.json` v2 format (vendored at `content/registry.json`).
 //!
-//! - [`Registry`]: top-level document (version, profiles, components).
-//! - [`Profile`]: a named component set (`essential`, `developer`, ...).
-//! - [`Component`]: a single installable unit (agent, skill, context, ...).
-//! - [`Category`]: the eight component buckets, in OAC menu order.
-//!
-//! Unknown JSON keys are ignored by serde (forward-compatible), so adding
-//! fields to the registry never breaks the parser. Profiles preserve their
+//! Unknown JSON keys are ignored (forward-compatible); profiles preserve
 //! file order via [`IndexMap`], which the TUI uses for menus.
 
 use indexmap::IndexMap;
@@ -19,7 +13,6 @@ pub struct Registry {
     pub version: Option<String>,
     /// Profiles keyed by id, in file order (menu display order).
     pub profiles: IndexMap<String, Profile>,
-    /// Component buckets, keyed by category name.
     pub components: Components,
 }
 
@@ -191,8 +184,8 @@ mod tests {
         assert_eq!(Category::Agents.components(&reg).len(), 8);
     }
 
-    // Inline edge cases the real registry can't express (no empty bucket,
-    // no component missing both optional fields).
+    // Edge cases the real registry can't express (empty bucket, missing
+    // optional fields).
 
     #[test]
     fn missing_optional_fields_default_empty() {

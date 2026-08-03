@@ -1,10 +1,6 @@
-//! Interactive installer (Brick 1): TUI flow mirroring OAC `install.sh`.
-//!
-//! Entry point: [`run`]. Loads the registry (real data), then hands over
-//! to the TUI ([`ui`]). Real copy/collision/manifest logic is deliberately
-//! deferred to Brick 2+ — this brick is the interactive interface.
-//!
-//! Error envelope follows cli-spec §7 (E-codes), kept minimal on purpose.
+//! Interactive installer: TUI flow mirroring OAC `install.sh`.
+//! Entry point: [`run`]. Loads the registry then hands over to the TUI
+//! ([`ui`]); real copy/collision/manifest logic lands in a later stage.
 
 pub mod model;
 pub mod registry;
@@ -21,7 +17,7 @@ pub struct Options {
     pub registry_path: PathBuf,
 }
 
-/// Top-level installer error (cli-spec §7 envelopes, minimal for Brick 1).
+/// Top-level installer error (cli-spec §7 envelopes, minimal on purpose).
 #[derive(Debug, thiserror::Error)]
 pub enum InstallError {
     /// Registry load/parse failures (E400 io / E100 parse).
