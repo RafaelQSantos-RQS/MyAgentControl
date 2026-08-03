@@ -4,8 +4,8 @@ type: module-spec
 parent: MAC-MASTER
 title: Agents — Module Spec
 status: approved
-version: 1.0.0
-updated: 2026-08-02
+version: 0.0.1
+updated: 2026-08-03
 change_requests: []
 depends_on: [MAC-MASTER, MAC-CTX]
 ---
@@ -15,9 +15,10 @@ depends_on: [MAC-MASTER, MAC-CTX]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 1.0.0 |
+| **Version** | 0.0.1 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | Vendored `content/agent/` (OAC v0.7.1 as starting point) |
+| **Note** | Rewritten 2026-08-03 under the format-fidelity principle (C16). Frontmatter fields and permission verbs are OpenCode-declared (`[OAC format]`); the delegation-graph and `0-category.json` consistency checks are tool-added developer-experience features (`[tool DX]`) |
 
 ---
 
@@ -91,12 +92,14 @@ These come from the markdown bodies and are preserved verbatim in scaffolds:
 
 ## 5. Functional Requirements
 
-- **AG-1** Parse and validate agent frontmatter (required fields, enums, permission map structure).
-- **AG-2** Validate delegation graph: `task:` allowlists in an agent must reference existing subagent names; subagents referenced in any `task` permission must exist.
-- **AG-3** Validate category metadata (`0-category.json`) consistency with directory contents.
-- **AG-4** `init` copies the vendored `content/agent/` tree (C6); validate operates on the real tree.
-- **AG-5** `wizard agent new`: interactive generator producing a spec-compliant agent file (SystemBuilder-style); name, mode, temperature, permissions, delegation allowlist.
-- **AG-6** `list agents`: table of name, mode, category, temperature, description.
+Markers (C16): `[OAC format]` validates a rule the agent/OpenCode format declares; `[tool DX]` is a user-approved developer-experience feature.
+
+- **AG-1** `[OAC format]` Parse and validate agent frontmatter (required fields, enums, permission map structure).
+- **AG-2** `[tool DX]` Validate delegation graph: `task:` allowlists in an agent must reference existing subagent names; subagents referenced in any `task` permission must exist.
+- **AG-3** `[tool DX]` Validate category metadata (`0-category.json`) consistency with directory contents.
+- **AG-4** `[OAC format]` `init` copies the vendored `content/agent/` tree (C6); validate operates on the real tree.
+- **AG-5** `[tool DX]` `wizard agent new`: interactive generator producing a spec-compliant agent file (SystemBuilder-style); name, mode, temperature, permissions, delegation allowlist.
+- **AG-6** `[tool DX]` `list agents`: table of name, mode, category, temperature, description.
 
 ## 6. Examples & Scenarios
 

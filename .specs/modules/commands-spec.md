@@ -4,8 +4,8 @@ type: module-spec
 parent: MAC-MASTER
 title: Commands — Module Spec
 status: approved
-version: 1.0.0
-updated: 2026-08-02
+version: 0.0.1
+updated: 2026-08-03
 change_requests: []
 depends_on: [MAC-MASTER, MAC-AG, MAC-CTX]
 ---
@@ -15,9 +15,10 @@ depends_on: [MAC-MASTER, MAC-AG, MAC-CTX]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 1.0.0 |
+| **Version** | 0.0.1 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | Vendored `content/command/` (OAC v0.7.1 as starting point) |
+| **Note** | Rewritten 2026-08-03 under the format-fidelity principle (C16). The command frontmatter schema (`description`, `tags`, `dependencies`) is OAC-declared (`[OAC format]`); dependency-resolution checks and wizards are tool-added developer-experience features (`[tool DX]`). `navigation_update` in `/add-context` is a behavior the wizard performs, not a machine-validated rule |
 
 ---
 
@@ -69,11 +70,13 @@ dependencies:                              # optional
 
 ## 5. Functional Requirements
 
-- **CMD-1** Parse/validate command frontmatter (description, tags, dependencies).
-- **CMD-2** Validate dependency resolution across all three reference spaces (subagent/context/skill); report dangling references with the specific command + dep.
-- **CMD-3** `init` copies the vendored `content/command/` tree (C6); validate operates on the real tree.
-- **CMD-4** `wizard command new`: interactive generator for description, tags, dependencies, workflow steps → command markdown.
-- **CMD-5** `list commands`: table of name, description, tags, dependency count.
+Markers (C16): `[OAC format]` validates a rule the command/OpenCode format declares; `[tool DX]` is a user-approved developer-experience feature.
+
+- **CMD-1** `[OAC format]` Parse/validate command frontmatter (description, tags, dependencies).
+- **CMD-2** `[tool DX]` Validate dependency resolution across all three reference spaces (subagent/context/skill); report dangling references with the specific command + dep. The vendored command tree satisfies this check today (any future defect is fixed in the tree per C16 policy).
+- **CMD-3** `[OAC format]` `init` copies the vendored `content/command/` tree (C6); validate operates on the real tree.
+- **CMD-4** `[tool DX]` `wizard command new`: interactive generator for description, tags, dependencies, workflow steps → command markdown.
+- **CMD-5** `[tool DX]` `list commands`: table of name, description, tags, dependency count.
 
 ## 6. Examples & Scenarios
 

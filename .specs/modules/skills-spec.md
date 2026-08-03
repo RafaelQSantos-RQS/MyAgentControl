@@ -4,8 +4,8 @@ type: module-spec
 parent: MAC-MASTER
 title: Skills — Module Spec
 status: approved
-version: 1.0.0
-updated: 2026-08-02
+version: 0.0.1
+updated: 2026-08-03
 change_requests: []
 depends_on: [MAC-MASTER, MAC-AG]
 ---
@@ -15,9 +15,10 @@ depends_on: [MAC-MASTER, MAC-AG]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 1.0.0 |
+| **Version** | 0.0.1 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | Vendored `content/skills/` (plural only; OAC v0.7.1 as starting point). The singular `skill/` tree from OAC was **removed** by user decision (orphaned; the OpenCode runtime only loads `skills/<name>/SKILL.md`; see `NOTICE.md`) |
+| **Note** | Rewritten 2026-08-03 under the format-fidelity principle (C16). The OpenCode-official frontmatter contract is the loadability gate (`[OAC format]`); shebang, referenced-file, and cross-check rules are tool-added developer-experience features (`[tool DX]`) |
 
 ---
 
@@ -70,12 +71,14 @@ skills/
 
 ## 4. Functional Requirements
 
-- **SK-1** Validate skill folder structure: SKILL.md present, frontmatter valid (OpenCode tier), router.sh present + executable, referenced files exist.
-- **SK-2** Validate router.sh is a bash script with a `#!/usr/bin/env bash` shebang and that it dispatches the documented subcommands.
-- **SK-3** `init` copies the vendored `content/skills/` tree (C6); validate operates on the real tree.
-- **SK-4** `wizard skill new`: interactive generator for name, description, version, category, tags, subcommands → generates SKILL.md + router.sh skeleton + optional workflow stub (authoring tier enforced on output).
-- **SK-5** `list skills`: table of name, version, category, tags, folder path.
-- **SK-6** Cross-check: skills referenced in agent `skill:` permission allowlists exist.
+Markers (C16): `[OAC format]` validates a rule the skill/OpenCode format declares; `[tool DX]` is a user-approved developer-experience feature.
+
+- **SK-1** `[OAC format]` Validate skill folder structure: SKILL.md present, frontmatter valid (OpenCode tier), router.sh present + executable, referenced files exist.
+- **SK-2** `[tool DX]` Validate router.sh is a bash script with a `#!/usr/bin/env bash` shebang and that it dispatches the documented subcommands.
+- **SK-3** `[OAC format]` `init` copies the vendored `content/skills/` tree (C6); validate operates on the real tree.
+- **SK-4** `[tool DX]` `wizard skill new`: interactive generator for name, description, version, category, tags, subcommands → generates SKILL.md + router.sh skeleton + optional workflow stub (authoring tier enforced on output).
+- **SK-5** `[tool DX]` `list skills`: table of name, version, category, tags, folder path.
+- **SK-6** `[tool DX]` Cross-check: skills referenced in agent `skill:` permission allowlists exist.
 
 ## 5. Examples & Scenarios
 

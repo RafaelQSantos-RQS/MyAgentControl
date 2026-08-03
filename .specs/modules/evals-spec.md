@@ -4,8 +4,8 @@ type: module-spec
 parent: MAC-MASTER
 title: Eval Framework — Module Spec
 status: approved
-version: 1.0.0
-updated: 2026-08-02
+version: 0.0.2
+updated: 2026-08-03
 change_requests: []
 depends_on: [MAC-MASTER, MAC-AG]
 ---
@@ -15,9 +15,10 @@ depends_on: [MAC-MASTER, MAC-AG]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 1.0.0 |
+| **Version** | 0.0.2 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | OAC v0.7.1 eval concept (YAML cases → results JSON → HTML dashboard). NOTE: the OAC `evals/` tree lives at the OAC **repo root**, not in `.opencode/`; it is **not vendored** into `content/` (master §6.5) |
+| **Note** | Rewritten 2026-08-03 under the format-fidelity principle (C16). The eval-case schema is OAC-declared (`[OAC format]`); validate/dashboard/import commands are tool-added developer-experience features (`[tool DX]`). The model matrix in §4 is informational (from OAC `package.json`), not validated |
 
 ---
 
@@ -27,7 +28,7 @@ OAC ships an evaluation harness that runs agents against YAML test cases and pro
 
 **Scope notes:**
 - **No vendored `evals/` in `content/`** (master §6.5): the OAC `evals/` tree is a repo-root artifact. The Rust tool therefore operates on a **user-provided** `evals/` directory in the target project (validated, not scaffolded from `content/`).
-- **No `registry.json` validation** (EV-6 removed): `registry.json` is an OAC repo-root artifact, not present in the managed `.opencode/` tree.
+- **`registry.json` validation is covered by [`registry-spec.md`](./registry-spec.md)** (MAC-REG), not by this module (2026-08-03 change: the registry is now part of the managed tree).
 - **D1:** v1 evals are a **config-manager** feature: validate cases, validate result schemas, generate the dashboard from an existing results JSON. Running cases requires executing agents, which is out of scope for the config-manager binary; an `evals run` subcommand that shells out to the OpenCode CLI is **deferred to post-v1**.
 
 ## 2. Target Structure (user-provided `evals/` in the project)
@@ -50,6 +51,24 @@ Original cases live under `evals/agents/...` with patterns such as `developer/*.
 - `model` field is provider-qualified (`opencode/grok-code-fast`, `anthropic/claude-...`, `openai/gpt-4-turbo`) or absent (default).
 - Case body defines steps and (optionally) evaluators.
 
+## 3.1 Evaluator Set (known evaluator names, from the OAC framework)
+
+The OAC framework ships these evaluators; the tool validates that a case's
+`evaluators` references only known names (config side; running them is post-v1):
+
+`approval-gate`, `context-loading` (supports `expectedContextFiles` for
+explicit mode, or keyword auto-detect), `execution-balance`, `tool-usage`,
+`behavior`, `delegation`, `stop-on-failure`, `report-first`, `error-handling`,
+`cleanup-confirmation`, `agent-model`, `performance-metrics` (metrics-only,
+always passes).
+
+## 3.2 Multi-Agent Logging (config side; collector is post-v1)
+
+The framework tracks delegation hierarchies in real time (session-tracker,
+timeline-builder, message-parser). The management side in scope for v1 is
+limited to **validating** log-schema expectations and the results JSON schema;
+the runtime collector that reads OpenCode session storage is post-v1 (D1).
+
 ## 4. Model-Agnostic Test Matrix (from package.json)
 
 - Defaults: `opencode/grok-code-fast`; alternatives: `anthropic/claude-3-5-sonnet-20241022`, `openai/gpt-4-turbo`.
@@ -58,12 +77,16 @@ Original cases live under `evals/agents/...` with patterns such as `developer/*.
 
 ## 5. Functional Requirements
 
-- **EV-1** Validate YAML eval cases against the schema above (name uniqueness, agent existence, model format).
-- **EV-2** `evals validate`: validate all cases + result schema in the target `evals/` dir.
-- **EV-3** (post-v1, deferred) `evals run [--agent] [--model] [--pattern]`: future subcommand that would shell out to the OpenCode CLI (`opencode` must be on PATH) and write `results/latest.json` + timestamped `results/history/<agent>-<ts>.json`. Documented here so the results JSON schema is designed now; the runner itself is not built in v1.
-- **EV-4** `evals dashboard`: generate a self-contained HTML dashboard from `results/latest.json` (pass/fail counts, per-agent summary, history links). No external assets; opens on port 8000 like the original `serve.sh`.
-- **EV-5** `import <path-to-oac>` may bring an existing `evals/` tree into a project (managed artifacts, never executed by Rust).
-- **EV-6** Validate `registry.json` consistency: **removed** (not part of the managed tree; see §1).
+Markers (C16): `[OAC format]` validates a rule the eval-case/OpenCode format declares; `[tool DX]` is a user-approved developer-experience feature.
+
+- **EV-1** `[OAC format]` Validate YAML eval cases against the schema above (name uniqueness, agent existence, model format).
+- **EV-2** `[tool DX]` `evals validate`: validate all cases + result schema in the target `evals/` dir.
+- **EV-3** `[tool DX]` (post-v1, deferred) `evals run [--agent] [--model] [--pattern]`: future subcommand that would shell out to the OpenCode CLI (`opencode` must be on PATH) and write `results/latest.json` + timestamped `results/history/<agent>-<ts>.json`. Documented here so the results JSON schema is designed now; the runner itself is not built in v1.
+- **EV-4** `[tool DX]` `evals dashboard`: generate a self-contained HTML dashboard from `results/latest.json` (pass/fail counts, per-agent summary, history links). No external assets; opens on port 8000 like the original `serve.sh`.
+- **EV-5** `[tool DX]` `import <path-to-oac>` may bring an existing `evals/` tree into a project (managed artifacts, never executed by Rust).
+- **EV-6** `registry.json` validation: **moved** to [`registry-spec.md`](./registry-spec.md) (MAC-REG) on 2026-08-03; no longer part of this module.
+- **EV-7** `[tool DX]` Validate that a case's `evaluators` references only known evaluator names (§3.1) and that `expectedContextFiles` paths exist when specified.
+- **EV-8** `[tool DX]` (post-v1, deferred) Multi-agent logging collector: read OpenCode session storage, rebuild delegation timelines, produce log JSON; schema designed now, runtime post-v1 (D1).
 
 ## 6. Examples & Scenarios
 
@@ -83,6 +106,7 @@ steps:
 - `agent: ghost` → error EV-202 (unknown agent)
 - `model: gpt4` (unqualified) → error EV-203
 - missing `steps` → error EV-204
+- `evaluators: [unknown-evaluator]` → error EV-205 (unknown evaluator name)
 
 ### 6.3 Dashboard fixture
 
@@ -96,6 +120,7 @@ Given/When/Then form per constitution C10.
 - **AC-E2** Given a sample `latest.json` fixture, **when** `evals dashboard` runs, **then** it renders correct totals and per-agent rows (unit-tested HTML).
 - **AC-E3** (post-v1) Given OpenCode on PATH, **when** `evals run` runs, **then** it produces a schema-valid results JSON; deferred, not required for v1.
 - **AC-E4** Given a project with a `results/` dir, **when** the tool runs, **then** generated results are never committed into `content/` (kept out of the managed tree).
+- **AC-E5** Given a case that references an unknown evaluator or a missing `expectedContextFiles` path, **when** `evals validate` runs, **then** it fails naming the case and the unknown reference.
 
 ## 8. Cross-References
 

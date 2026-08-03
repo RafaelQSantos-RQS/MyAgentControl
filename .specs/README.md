@@ -6,6 +6,16 @@
 > this one in a single commit. This folder is the current, authoritative spec
 > set.
 
+> **Rewritten 2026-08-03 (user decision, constitution C16).** The suite was
+> rewritten under the **format-fidelity** principle: the tool validates only
+> rules the managed formats declare (OAC/OpenCode), never invented integrity
+> rules. The former CTX-4 navigation cross-reference validator was removed
+> (the OAC reference does not enforce it; `navigation.md` is a curated map,
+> not a manifest). Module specs now mark every functional requirement as
+> `[OAC format]` or `[tool DX]`. Same day: the OAC feature inventory was
+> incorporated (registry-spec MAC-REG, manifest/SHA256, `@`-reference syntax,
+> external-context, version bump, session cleanup).
+
 ## What is this project?
 
 A **Rust reimplementation** of [OpenAgentsControl (OAC)](https://github.com/darrenhinde/OpenAgentsControl): `myagentcontrol`.
@@ -56,30 +66,49 @@ Approved specs are never edited silently in place (constitution C11). Changes to
 4. **Verify** → validate against acceptance criteria + walk tests against the real `content/` tree
 5. **Update spec** → keep specs in sync with reality (Spec-Anchored level; spec changes first, C15)
 
+## Format-fidelity principle (C16)
+
+The tool validates **only** rules that the managed formats declare (OAC/OpenCode):
+frontmatter fields, permission verbs, MVI thresholds, context resolution,
+dependency references, the SKILL.md contract. It **never** invents integrity
+rules beyond those formats. Consequences for this folder:
+
+- Every functional requirement is marked `[OAC format]` (validates a declared
+  rule) or `[tool DX]` (user-approved developer-experience feature: wizard,
+  list output, dashboard).
+- A rule that OAC does not declare is **not** added to a spec. If one slips in,
+  remove it (2026-08-03: the former CTX-4 "every context file listed" rule was
+  removed; OAC's own tree does not satisfy it, by design).
+- Walk-test deviation policy (D8/C6): when the vendored tree deviates from a
+  declared rule, genuine defects are fixed in the tree; intentional deviations
+  are documented per-file in the walk tests with a reason.
+
 ## Spec index
 
 | File | Scope | Status |
 |------|-------|--------|
-| [`constitution.md`](./constitution.md) | Immutable project rules (C1–C15); changes require amendment | Ratified (v2.0.0) |
-| [`myagentcontrol-spec.md`](./myagentcontrol-spec.md) | Master spec (MAC-MASTER): vision, goals, architecture, decisions, roadmap | Approved |
-| [`modules/context-spec.md`](./modules/context-spec.md) | Context system (MAC-CTX): MVI, local-first resolution, navigation | Approved |
-| [`modules/agents-spec.md`](./modules/agents-spec.md) | Agents (MAC-AG): core agents, subagents, frontmatter schema, permissions, delegation | Approved |
-| [`modules/skills-spec.md`](./modules/skills-spec.md) | Skills (MAC-SK): the four vendored skills, SKILL.md validation, router.sh | Approved |
-| [`modules/commands-spec.md`](./modules/commands-spec.md) | Commands (MAC-CMD): `/add-context`, `/commit`, `/test`, … | Approved |
-| [`modules/evals-spec.md`](./modules/evals-spec.md) | Evals (MAC-EV): YAML cases, results JSON, dashboard | Approved |
-| [`modules/cli-spec.md`](./modules/cli-spec.md) | CLI (MAC-CLI): the Rust binary, commands, validation, walk tests, wizards | Approved |
+| [`constitution.md`](./constitution.md) | Immutable project rules (C1–C16); changes require amendment | Ratified (v0.0.1) |
+| [`myagentcontrol-spec.md`](./myagentcontrol-spec.md) | Master spec (MAC-MASTER): vision, goals, architecture, decisions, roadmap | Approved (v0.0.2) |
+| [`modules/context-spec.md`](./modules/context-spec.md) | Context system (MAC-CTX): MVI, local-first resolution, wizard | Approved (v0.0.2) |
+| [`modules/agents-spec.md`](./modules/agents-spec.md) | Agents (MAC-AG): core agents, subagents, frontmatter schema, permissions, delegation | Approved (v0.0.1) |
+| [`modules/skills-spec.md`](./modules/skills-spec.md) | Skills (MAC-SK): the four vendored skills, SKILL.md validation, router.sh | Approved (v0.0.1) |
+| [`modules/commands-spec.md`](./modules/commands-spec.md) | Commands (MAC-CMD): `/add-context`, `/commit`, `/test`, … | Approved (v0.0.1) |
+| [`modules/evals-spec.md`](./modules/evals-spec.md) | Evals (MAC-EV): YAML cases, results JSON, dashboard | Approved (v0.0.2) |
+| [`modules/registry-spec.md`](./modules/registry-spec.md) | Component registry & install state (MAC-REG): `registry.json`, manifest/SHA256, profiles, add/update | Approved (v0.0.2) |
+| [`modules/cli-spec.md`](./modules/cli-spec.md) | CLI (MAC-CLI): the Rust binary, commands, validation, walk tests, wizards | Approved (v0.0.2) |
 
 ## Spec identification (ID registry)
 
 | ID | Artifact | Purpose |
 |----|----------|---------|
-| `MAC-CONST` | `constitution.md` | Immutable project rules (C1–C15); outside the feature lifecycle |
+| `MAC-CONST` | `constitution.md` | Immutable project rules (C1–C16); outside the feature lifecycle |
 | `MAC-MASTER` | `myagentcontrol-spec.md` | Master spec: goals, architecture, ADR table (D1–D11), NFRs, roadmap |
 | `MAC-CTX` | `modules/context-spec.md` | Context system module |
 | `MAC-AG` | `modules/agents-spec.md` | Agents module |
 | `MAC-SK` | `modules/skills-spec.md` | Skills module |
 | `MAC-CMD` | `modules/commands-spec.md` | Commands module |
 | `MAC-EV` | `modules/evals-spec.md` | Evals module |
+| `MAC-REG` | `modules/registry-spec.md` | Component registry & install state module |
 | `MAC-CLI` | `modules/cli-spec.md` | CLI binary module |
 
 **Numbering policy:**
@@ -87,18 +116,19 @@ Approved specs are never edited silently in place (constitution C11). Changes to
 - **Architecture/module specs** use semantic IDs (`MAC-<MODULE>`): stable, descriptive, immune to renumbering churn.
 - **Future feature specs** (e.g. OAC PRs mined as features) use **sequential numbers** (`SPEC-001`, `SPEC-002`, …) in `.specs/features/SPEC-001-<name>/` (each feature gets a folder with `spec.md`, plus `plan.md`/`tasks.md` once implementation starts). They deliberately do **not** live at the root or in `modules/`. When the first feature spec is created, add it to the Spec index and this registry.
 - **Ready-to-copy template:** `.specs/features/_template/`; copy the folder, rename `SPEC-XXX` → next number + feature slug, fill the placeholders.
-- Decisions inside specs are numbered separately (`D1`–`D11` in the master ADR table).
+- Decisions inside specs are numbered separately (`D1`–`D12` in the master ADR table).
 
 **Prefix map** (functional requirements, acceptance criteria, and error rule IDs per module):
 
 | Module spec | FR IDs | AC IDs | Error rule IDs |
 |---|---|---|---|
-| Context | `CTX-1..7` | `AC-C1..4` | `CTX-2xx` |
+| Context | `CTX-1..8` | `AC-C1..5` | `CTX-2xx` |
 | Agents | `AG-1..6` | `AC-A1..4` | `AG-2xx` |
 | Skills | `SK-1..6` | `AC-S1..4` | `SK-2xx` |
 | Commands | `CMD-1..5` | `AC-M1..3` (M avoids C clash with Context) | `CMD-2xx` |
-| Evals | `EV-1..6` | `AC-E1..4` | `EV-2xx` |
-| CLI | `CLI-1..8` | `AC-L1..8` (L for CLI) | `E100–E500` envelopes + module rule IDs |
+| Evals | `EV-1..8` | `AC-E1..5` | `EV-2xx` |
+| Registry | `REG-1..10` | `AC-R1..4` | `REG-2xx` |
+| CLI | `CLI-1..13` | `AC-L1..9` (L for CLI) | `E100–E600` envelopes + module rule IDs |
 
 **Error codes are two-tier:** the CLI reports a category envelope (`E200` schema, `E300` dangling reference, …) plus the specific module rule ID (e.g. `E200 [agents] … rule: AG-202`). See [`modules/cli-spec.md`](./modules/cli-spec.md) §7.
 
@@ -115,6 +145,7 @@ Approved specs are never edited silently in place (constitution C11). Changes to
 │   ├── skills-spec.md      # MAC-SK
 │   ├── commands-spec.md    # MAC-CMD
 │   ├── evals-spec.md       # MAC-EV
+│   ├── registry-spec.md    # MAC-REG
 │   └── cli-spec.md         # MAC-CLI
 └── features/_template/     # feature-spec template (SPEC-001, …)
 ```
@@ -126,12 +157,13 @@ Approved specs are never edited silently in place (constitution C11). Changes to
 ## SDD best-practices compliance matrix
 
 | Best practice | Where implemented |
-|---|---|
+|---|---|---|
 | Spec as source of truth; code is derivative | Constitution C7; README lifecycle |
 | Separation of *what* (specs) from *how* (implementation plan) | Master spec goals; module specs keep requirements separate from crate layout |
 | Structured lifecycle with gating | README lifecycle table + frontmatter `status` |
 | Change Request workflow for approved specs | README §Change Requests |
-| Immutable constitution | `constitution.md` (C1–C15) |
+| Immutable constitution | `constitution.md` (C1–C16) |
+| Format fidelity (validate only declared rules) | Constitution C16; README §Format-fidelity principle; `[OAC format]`/`[tool DX]` markers |
 | Machine-readable frontmatter (`id`, `type`, `status`, `depends_on`) | YAML frontmatter on every spec |
 | Modular, focused spec files | Master + per-module structure |
 | Testable acceptance criteria | Given/When/Then in every spec (constitution C10) |

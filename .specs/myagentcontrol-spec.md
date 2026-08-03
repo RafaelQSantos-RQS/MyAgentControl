@@ -3,8 +3,8 @@ id: MAC-MASTER
 type: master-spec
 title: MyAgentControl — Master Spec
 status: approved
-version: 1.0.0
-updated: 2026-08-02
+version: 0.0.2
+updated: 2026-08-03
 change_requests: []
 owner: Rafael (user)
 depends_on: []
@@ -17,12 +17,12 @@ license: MIT + attribution to OpenAgentsControl
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 1.0.0 |
-| **Updated** | 2026-08-02 |
+| **Version** | 0.0.2 |
+| **Updated** | 2026-08-03 |
 | **Owner** | Rafael (user) |
 | **Language** | English (per decision) |
 | **License** | MIT + attribution to OpenAgentsControl |
-| **Note** | Rebuilt 2026-08-02 from scratch; OAC v0.7.1 is the *starting point*, not a parity yardstick (constitution C6) |
+| **Note** | Rebuilt 2026-08-02 from scratch; OAC v0.7.1 is the *starting point*, not a parity yardstick (constitution C6). Rewritten 2026-08-03 under the format-fidelity principle (C16): the tool validates only OAC-declared rules. 2026-08-03: incorporated the OAC feature inventory (registry, manifest, ref-syntax, external-context, version/cleanup) |
 
 ---
 
@@ -37,10 +37,11 @@ The user, a Rust enthusiast who uses many different AI models, wants a **Rust re
 1. **Full content coverage**: all core agents, subagents, skills, commands, and the context system are present and managed from the vendored `content/` tree (440 files, OAC v0.7.1 as starting point).
 2. **Model-agnostic**: never tie the framework to one vendor. Execution happens via the OpenCode CLI (user's chosen backend), which is itself model-agnostic.
 3. **Configuration manager, not a runtime**: the Rust binary copies the vendored `content/` tree (source of truth, C6), validates, and maintains the `.opencode/`-compatible structure. It does **not** invoke OpenCode or any model API itself.
-4. **Self-consistent and machine-verifiable**: walk tests validate the **real `content/` tree** (structure, frontmatter, references) and always run; no external checkout required (D8).
+4. **Self-consistent and machine-verifiable**: walk tests validate the **real `content/` tree** (structure, frontmatter) and always run; no external checkout required (D8).
 5. **Editable & transparent**: agents/skills/commands remain human-editable markdown with YAML frontmatter, exactly like the original.
 6. **Token-efficient MVI context system**: lazy loading, files < 200 lines, local-first resolution.
 7. **Developer-friendly CLI**: `myagentcontrol` binary with init/validate/list/wizard commands.
+8. **Format fidelity**: the tool validates only rules the managed formats declare (OAC/OpenCode); it never invents integrity rules beyond the formats (C16).
 
 ## 3. Non-Goals (explicit out-of-scope for v1)
 
@@ -49,7 +50,9 @@ The user, a Rust enthusiast who uses many different AI models, wants a **Rust re
 - ❌ The Claude Code plugin distribution (`.claude-plugin/`, `plugins/claude-code/`); noted as reference only.
 - ❌ Open PRs as features: they are intentionally **not** listed in this spec; tracked separately and spec'd individually when picked up (see §10 Post-v1).
 - ❌ Cloud migration, agent marketplace/registry hosting, IDE integrations.
+- ❌ IDE-specific config generation (`apply` → `.cursorrules`, `CLAUDE.md`, `.windsurfrules`) and Claude Code integration: the tool is model- and IDE-agnostic by constitution C5 (added 2026-08-03 from the OAC feature inventory).
 - ❌ Re-fetching or re-syncing `content/` from the OAC upstream (C6); the tree is maintained in-repo.
+- ❌ Inventing integrity rules the managed formats do not declare (for example, "every context file must be listed in a navigation file"). The tool validates only declared rules (C16).
 - ❌ `evals/`, `registry.json`, `bin/oac.js`, `install.sh`, `update.sh` from the OAC **repo root**; only the `.opencode/` tree is vendored (see §6.5).
 
 ## 4. Core Concepts & Terminology
@@ -141,18 +144,20 @@ The user, a Rust enthusiast who uses many different AI models, wants a **Rust re
 | `docs/` | `agents/`, `guides/`, `workflows/` |
 | `config.json`, `opencode.json`, `config/agent-metadata.json` | root config files |
 | `scripts/` | `task-cli.ts` |
+| `registry.json` | component registry (agents/subagents/commands/skills/contexts/tools/plugins/configs + profiles); validated per [`modules/registry-spec.md`](./modules/registry-spec.md) |
 
-> **Not vendored:** OAC repo-root artifacts `evals/`, `registry.json`, `bin/oac.js`, `install.sh`, `update.sh` are **out of scope**; only the `.opencode/` tree is vendored. (`evals/` handling for user projects is covered by [`modules/evals-spec.md`](./modules/evals-spec.md); there is no `registry.json` in `content/`.)
+> **Not vendored:** OAC repo-root artifacts `evals/`, `bin/oac.js`, `install.sh`, `update.sh` are **out of scope**; only the `.opencode/` tree plus `registry.json` are vendored. (`evals/` handling for user projects is covered by [`modules/evals-spec.md`](./modules/evals-spec.md); `registry.json` was added to the managed tree on 2026-08-03.)
 
 ## 7. Cross-References
 
 | Topic | Module spec |
 |---|---|
-| Context system, MVI, navigation, local-first resolution | [`modules/context-spec.md`](./modules/context-spec.md) |
+| Context system, MVI, local-first resolution, wizard | [`modules/context-spec.md`](./modules/context-spec.md) |
 | Agent/subagent schema, permissions, delegation graph | [`modules/agents-spec.md`](./modules/agents-spec.md) |
 | Skills structure, router.sh, workflows | [`modules/skills-spec.md`](./modules/skills-spec.md) |
 | Slash commands | [`modules/commands-spec.md`](./modules/commands-spec.md) |
 | Eval framework, YAML cases, dashboard | [`modules/evals-spec.md`](./modules/evals-spec.md) |
+| Component registry, install state (manifest), profiles, add/update | [`modules/registry-spec.md`](./modules/registry-spec.md) |
 | The Rust CLI binary | [`modules/cli-spec.md`](./modules/cli-spec.md) |
 
 ## 8. Technical Decisions (ADR-style, MADR format)
@@ -172,6 +177,7 @@ The user, a Rust enthusiast who uses many different AI models, wants a **Rust re
 | D9 | accepted | Interactive wizard generators for agents/skills/commands | Easier: SystemBuilder-style DX, spec-compliant output. Harder: TTY interaction must degrade gracefully in CI/non-interactive mode |
 | D10 | accepted | Evals: validate cases + results JSON + HTML dashboard | Easier: useful feedback loop without running agents. Harder: dashboard HTML generation must be deterministic and dependency-free |
 | D11 | accepted | YAML parsing: use **`serde-saphyr`**, not `serde_yaml` (archived/deprecated). Discovered via the context7 `find-docs` skill (Aug 2026): `serde_yaml` has no Context7 entry; top matches were `serde_yml` (transition shim), `noyalib` (drop-in, keeps `Value`), and `serde-saphyr` (typed-only). **Chosen: `serde-saphyr`** (panic-free, budget limits, zero-copy) because our frontmatter schemas are fully typed and we don't need a dynamic `Value` DOM. Escape hatch: `noyalib` if `Value` support is ever needed | Easier: robust, panic-free, budget-guarded parsing (anti-DoS on 440-file tree); zero-copy perf; typed schemas fit the validation philosophy. Harder: no `Value`/`Mapping` dynamic DOM; serde-saphyr is a newer project |
+| D12 | accepted | Adopt the OAC **component registry** (`registry.json`) and **install-state manifest** (`.oac/manifest.json`) as managed, file-based artifacts (2026-08-03, from the OAC feature inventory). The registry is a JSON catalog over the markdown tree; validating it is C16-compatible because every check (paths exist, dependencies resolve, profiles cover) is declared by the registry schema. The manifest tracks SHA256 per installed file for `status`/`update` with user-modified detection | Easier: trustworthy init/update/add, component install by id/profile with dependency resolution, matches OAC's actual component-management spine. Harder: more surface to implement (new REG module); the `.oac/` manifest is tool DX (C16) and must stay transparent, never a format rule |
 
 ## 9. Non-Functional Requirements
 
@@ -188,7 +194,7 @@ The user, a Rust enthusiast who uses many different AI models, wants a **Rust re
 Cargo project layout, module structure, CLI arg parsing, error types (E100–E500), test harness helpers (`src/core/golden.rs` → renamed responsibility: tree helpers used by walk tests).
 
 ### Phase 1: Context system (MVI)
-Parse/validate context files incl. HTML-comment frontmatter, navigation.md, paths.json resolution rules, local-first/global-fallback logic (unit tested). `content/` vendored (done) + walk tests.
+Parse/validate context files incl. HTML-comment frontmatter (CTX-1), MVI thresholds (CTX-2), `paths.json` resolution rules + local-first/global-fallback logic (CTX-3), `init` copy (CTX-4), `/add-context` wizard (CTX-5), `--update` version increment (CTX-6), `@`-reference syntax convention (CTX-7), external-context cache (CTX-8). `content/` vendored (done) + walk tests. `navigation.md` files are validated as ordinary context files; the wizard keeps them updated. No navigation cross-reference validator (removed 2026-08-03, C16).
 
 ### Phase 2: Agents & subagents
 Frontmatter schema validation (YAML), permission maps, category JSONs, delegation graph validation, inventory walk test.
@@ -197,23 +203,27 @@ Frontmatter schema validation (YAML), permission maps, category JSONs, delegatio
 SKILL.md + router.sh presence/structure validation, workflow files, command files with `dependencies` frontmatter, walk tests.
 
 ### Phase 4: Eval framework
-YAML case schema validation, results JSON, HTML dashboard generator (user-provided `evals/` dir). (`evals run` is post-v1; see D1.)
+YAML case schema validation, evaluator-name + `expectedContextFiles` validation, results JSON, HTML dashboard generator (user-provided `evals/` dir). (`evals run` and the logging collector are post-v1; see D1.)
 
-### Phase 5: Full-tree walk tests & polish
+### Phase 5: Component registry & install state
+`registry.json` vendored + validated (paths, dependencies, profiles), manifest `.oac/manifest.json` with SHA256, `add`/`remove`/`status`/`update` commands, profile-based install (`init --profile`), collision detection. Per [`modules/registry-spec.md`](./modules/registry-spec.md).
+
+### Phase 6: Full-tree walk tests & polish
 Walk tests for `profiles/`, `prompts/`, `tool/`, `plugin/`, `plugins/`, `docs/`, `scripts/`, root config files (cli-spec §9); docs; release.
 
 ### Post-v1 (candidates, tracked elsewhere)
-Open PRs from the original repo are intentionally **not** listed in this spec. They are tracked separately as future feature candidates and will be spec'd individually when picked up.
+Open PRs from the original repo are intentionally **not** listed in this spec. They are tracked separately as future feature candidates and will be spec'd individually when picked up. Known post-v1 runtime items (D1): `evals run`, the eval logging collector, the multi-agent test runner, and the abilities system (`packages/plugin-abilities`, needs OpenCode plugin runtime).
 
 ## 11. Appendix: Acceptance Criteria (master-level)
 
 Given/When/Then form per constitution C10.
 
 - **AC1** Given a fresh empty project, **when** `myagentcontrol init` runs, **then** it scaffolds a complete `.opencode/` tree identical to `content/` and `myagentcontrol validate` exits 0.
-- **AC2** Given the managed tree, **when** `myagentcontrol validate` runs on a tree containing a broken markdown link, invalid YAML frontmatter, a missing navigation entry, or a permission-map error, **then** it exits 1 and reports each specific issue.
+- **AC2** Given the managed tree, **when** `myagentcontrol validate` runs on a tree containing invalid YAML frontmatter, an invalid permission verb, or a concept card missing its reference section, **then** it exits 1 and reports each specific issue.
 - **AC3** Given a wizard invocation, **when** it completes, **then** the generated agent/skill/command files pass `myagentcontrol validate` immediately.
 - **AC4** Given a valid `results/latest.json`, **when** `myagentcontrol evals dashboard` runs, **then** it renders a self-contained HTML dashboard with pass/fail counts.
 - **AC5** Given the codebase, **when** `cargo test` (incl. walk tests), `cargo clippy -- -D warnings`, and `cargo fmt --check` run, **then** all pass with zero warnings.
+- **AC6** Given a fresh project, **when** `init --profile developer`, `status`, `add context:<id>`, and `update --check` run in sequence, **then** they succeed idempotently, the manifest records installs, and no user-modified file is ever silently overwritten.
 
 ## 12. Open Questions
 

@@ -4,7 +4,7 @@ type: feature-spec
 parent: MAC-MASTER
 title: <Feature Name> — Feature Spec
 status: draft
-version: 0.1.0
+version: 0.0.1
 updated: YYYY-MM-DD
 depends_on: [MAC-MASTER]
 ---
@@ -14,7 +14,7 @@ depends_on: [MAC-MASTER]
 | | |
 |---|---|
 | **Status** | Draft |
-| **Version** | 0.1.0 |
+| **Version** | 0.0.1 |
 | **Parent** | [`../../myagentcontrol-spec.md`](../../myagentcontrol-spec.md) |
 | **Source** | <PR #, issue, or user idea; e.g. "mined from OAC PR #123"> |
 

@@ -4,8 +4,8 @@ type: module-spec
 parent: MAC-MASTER
 title: Context System — Module Spec
 status: approved
-version: 1.1.0
-updated: 2026-08-02
+version: 0.0.2
+updated: 2026-08-03
 change_requests: []
 depends_on: [MAC-MASTER]
 ---
@@ -15,9 +15,10 @@ depends_on: [MAC-MASTER]
 | | |
 |---|---|
 | **Status** | Approved |
-| **Version** | 1.1.0 |
+| **Version** | 0.0.2 |
 | **Parent** | [`../myagentcontrol-spec.md`](../myagentcontrol-spec.md) |
 | **Reference** | Vendored `content/context/` (OAC v0.7.1 as starting point) + `CONTEXT_SYSTEM_GUIDE.md` from the original repo |
+| **Note** | Rewritten 2026-08-03 under the format-fidelity principle (C16). The navigation cross-reference validator (old CTX-4) was **removed**: OAC does not enforce it and its own tree does not satisfy it, by design (`navigation.md` is a curated, token-efficient map, not a manifest) |
 
 ---
 
@@ -25,7 +26,7 @@ depends_on: [MAC-MASTER]
 
 The context system is OAC's "secret weapon": project coding standards and patterns stored as markdown, loaded by agents *before* code generation, using the **MVI (Minimal Viable Information)** principle to keep token usage ~80% lower than loading a whole codebase.
 
-Our Rust tool must be able to **validate and maintain** this tree, including its metadata conventions (HTML-comment frontmatter, priority levels, versions) and its resolution rules (local-first, global fallback for `core/` only). The tree itself is vendored under `content/context/` (source of truth, constitution C6).
+Our Rust tool must be able to **validate and maintain** this tree, including its metadata conventions (HTML-comment frontmatter, priority levels, versions) and its resolution rules (local-first, global fallback for `core/` only). The tree itself is vendored under `content/context/` (source of truth, constitution C6). Per C16, the tool validates **only** rules the context format declares; it does not invent new integrity rules (the removed CTX-4 is the canonical example).
 
 ## 2. Directory Structure (vendored, `content/context/`)
 
@@ -42,7 +43,7 @@ context/
 ├── openagents-repo/  project/
 ```
 
-## 3. MVI Rules (must be validated)
+## 3. MVI Rules (declared by the context format; must be validated)
 
 1. Files < **200 lines** (scannable < 30s). Files ≥ 200 lines are classified as
    **reference docs** and are **exempt** from the MVI formula (user decision).
@@ -57,19 +58,21 @@ context/
 5. Version tracking: new file → 1.0; content update → minor; structure change → major.
 6. **Concept cards** (< 200 lines, non-discovery) MUST include a reference section:
    any of `Codebase References`, `Related Context`, `Related Files`, `Related`,
-   `References`, `Reference`, `Quick Reference`, linking context to related
-   context/code ("any reference section" replaces the literal heading, user decision).
-   Discovery files (`navigation.md`, `index.md`, `README.md`, `CODEBASE_STANDARDS.md`)
-   and reference docs are exempt.
-7. `navigation.md` MUST be updated when files are created/modified (Quick Routes or Deep Dives table).
+   `References`, `Reference`, `Quick Reference` ("any reference section" replaces
+   the literal heading, user decision). Discovery files (`navigation.md`,
+   `index.md`, `README.md`, `CODEBASE_STANDARDS.md`) and reference docs are exempt.
+7. `navigation.md` is updated by the `/add-context` wizard when files are
+   created/modified (Quick Routes or Deep Dives table). Navigation cross-reference
+   completeness is **not** machine-validated (C16; removed 2026-08-03).
 
 > **Documented deviations:** the vendored tree contains a few files that do not
 > follow the §3.3 rule (compatibility-shim comments, YAML `---` frontmatter in
 > some files, concept docs without frontmatter, one `Priority: reference`). The
 > parser stays **strict** per this spec; those files are tracked as a documented
-> allowlist in `tests/context_walk.rs`.
+> allowlist in `tests/context_walk.rs`. Genuine defects are fixed in the tree
+> (C16 policy).
 
-## 4. Context Resolution Rules (to implement in Rust)
+## 4. Context Resolution Rules (declared by ContextScout; to implement in Rust)
 
 From `CONTEXT_SYSTEM_GUIDE.md` + `contextscout.md`:
 
@@ -94,17 +97,17 @@ Optional. Shape:
 
 ## 6. Functional Requirements
 
-- **CTX-1** Parse and validate HTML-comment frontmatter metadata (category, priority, version, updated).
-- **CTX-2** Validate MVI constraints on **concept cards** (< 200 lines, non-discovery):
-  required reference section → `CTX-208`. Files ≥ 200 lines are **reference docs**
-  (exempt); discovery files (`navigation.md`, `index.md`, `README.md`,
-  `CODEBASE_STANDARDS.md`) are exempt from the reference-section rule.
-  (Navigation registration is validated under CTX-4.)
-- **CTX-3** Implement local-first / global-fallback resolution as a pure function (testable without a filesystem by injecting a glob impl).
-- **CTX-4** Validate `navigation.md` cross-references (every listed file exists; every context file is listed or is an index/discovery file).
-- **CTX-5** `init` copies the vendored `content/context/` tree (C6); validate operates on the real tree.
-- **CTX-6** Provide `add-context` wizard equivalent (6-question Project Intelligence wizard → `project-intelligence/technical-domain.md`), following the original `/add-context` command rules.
-- **CTX-7** `--update` mode increments version and refreshes `Updated` date per versioning rules.
+Markers (C16): `[OAC format]` validates a rule the context format/ContextScout
+declares; `[tool DX]` is a user-approved developer-experience feature.
+
+- **CTX-1** `[OAC format]` Parse and validate HTML-comment frontmatter metadata (category, priority, version, updated).
+- **CTX-2** `[OAC format]` Validate MVI constraints on **concept cards** (< 200 lines, non-discovery): required reference section → `CTX-208`. Files ≥ 200 lines are **reference docs** (exempt); discovery files (`navigation.md`, `index.md`, `README.md`, `CODEBASE_STANDARDS.md`) are exempt from the reference-section rule.
+- **CTX-3** `[OAC format]` Implement local-first / global-fallback resolution as a pure function (testable without a filesystem by injecting a glob impl; ≤ 2 checks).
+- **CTX-4** `[OAC format]` `init` copies the vendored `content/context/` tree (C6); validate operates on the real tree.
+- **CTX-5** `[tool DX]` Provide `/add-context` wizard equivalent (6-question Project Intelligence wizard → `project-intelligence/technical-domain.md`), following the original `/add-context` command rules. The wizard updates `navigation.md` so newly created files are reachable from the map.
+- **CTX-6** `[tool DX]` `--update` mode increments version and refreshes the `Updated` date per the versioning rules (minor on content update, major on structure change; CTX-5 version rules).
+- **CTX-7** `[OAC format]` Enforce the OAC `@`-reference syntax convention (from the original `validate-context-refs.sh`) in agent and command files: reject dynamic references (`@$var`), flag non-standard `@` references, and allowlist `@.opencode/context/...`, `@AGENTS.md`, `@.cursorrules`, `@$N` positional args, and email/mailto. This is a **forward syntax** rule (the file's own references must follow the convention); it does **not** check navigation completeness (removed CTX-4, C16).
+- **CTX-8** `[tool DX]` External context cache: manage cached external documentation under `.tmp/external-context/` with a JSON manifest (add/update/list/remove), mirroring the original `manage-external-context.sh` and pairing with ExternalScout.
 
 ## 7. Examples & Scenarios
 
@@ -131,17 +134,30 @@ Optional. Shape:
 - No frontmatter comment at all
 - `Updated: 08/02/2026` (not YYYY-MM-DD)
 
+### 7.4 `@`-reference syntax (CTX-7)
+
+Valid (allowlisted):
+- `@.opencode/context/core/standards/code-quality.md`
+- `@AGENTS.md`
+- `@$1`, `@$2` (positional arguments)
+- `team@example.com`, `mailto:team@example.com`
+
+Invalid (each must be rejected):
+- `@${var}` or `@$path` (dynamic reference) → error CTX-209
+- `@some-other-place` (non-standard reference) → error CTX-210
+
 ## 8. Acceptance Criteria
 
 Given/When/Then form per constitution C10.
 
 - **AC-C1** Given the vendored `content/context/` tree, **when** `myagentcontrol validate --context` runs, **then** it passes with exit 0 (allowlisted deviations excluded).
-- **AC-C2** Given a context file with a broken priority value, missing frontmatter, a concept card missing a reference section, or a dangling navigation link, **when** validation runs, **then** each defect is detected with a specific error code (e.g. `CTX-201`, `CTX-208`).
+- **AC-C2** Given a context file with a broken priority value, missing frontmatter, or a concept card missing a reference section, **when** validation runs, **then** each defect is detected with a specific error code (e.g. `CTX-201`, `CTX-208`).
 - **AC-C3** Given the resolution scenarios in §7.1, **when** the resolver runs with injected glob results, **then** it returns exactly the expected `{core_root}` for all five rows.
 - **AC-C4** Given the `content/context/` tree, **when** the context walk test runs, **then** it validates structure + frontmatter on every file (always-on, no external checkout).
+- **AC-C5** Given an agent or command file containing a dynamic `@` reference or a non-standard `@` reference, **when** `validate` runs, **then** the defect is reported with `CTX-209`/`CTX-210`; **when** only allowlisted references are present, **then** it passes.
 
 ## 9. Cross-References
 
 - Agent that consumes this: `ContextScout` → [`agents-spec.md`](./agents-spec.md)
 - Command that writes this: `/add-context` → [`commands-spec.md`](./commands-spec.md)
-- CLI surface: `validate`, `wizard add-context` → [`cli-spec.md`](./cli-spec.md)
+- CLI surface: `validate`, `wizard add-context`, `--update` → [`cli-spec.md`](./cli-spec.md)
