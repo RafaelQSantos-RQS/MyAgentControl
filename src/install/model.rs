@@ -142,95 +142,98 @@ impl Category {
 mod tests {
     use super::*;
 
-    /// Minimal registry exercising every field the TUI reads.
-    const FIXTURE: &str = r#"{
-      "version": "2.0.0",
-      "schema_version": "2.0.0",
-      "profiles": {
-        "essential": {
-          "name": "Essential (Minimal)",
-          "description": "Minimal starter kit",
-          "components": ["agent:openagent", "subagent:task-manager"]
-        },
-        "developer": {
-          "name": "Developer",
-          "components": []
-        }
-      },
-      "components": {
-        "agents": [{
-          "id": "openagent",
-          "name": "OpenAgent",
-          "path": ".opencode/agent/core/openagent.md",
-          "description": "Universal agent",
-          "dependencies": [],
-          "files": []
-        }],
-        "contexts": [],
-        "skills": [{
-          "id": "task-management",
-          "name": "Task Management",
-          "path": ".opencode/skills/task-management/SKILL.md",
-          "files": [".opencode/skills/task-management/SKILL.md"]
-        }]
-      }
-    }"#;
+    /// The real vendored registry — parsing it must always succeed.
+    const REAL_REGISTRY: &str = include_str!("../../content/registry.json");
 
     #[test]
-    fn parses_registry_version() {
-        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
+    fn parses_real_registry() {
+        let reg: Registry = serde_json::from_str(REAL_REGISTRY).expect("real registry parses");
+        assert_eq!(reg.profiles.len(), 5);
+    }
+
+    #[test]
+    fn real_registry_version() {
+        let reg: Registry = serde_json::from_str(REAL_REGISTRY).expect("real registry parses");
         assert_eq!(reg.version.as_deref(), Some("2.0.0"));
     }
 
     #[test]
-    fn parses_profile_count() {
-        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
-        assert_eq!(reg.profiles.len(), 2);
+    fn real_registry_agents_bucket() {
+        let reg: Registry = serde_json::from_str(REAL_REGISTRY).expect("real registry parses");
+        assert_eq!(reg.components.agents.len(), 8);
     }
 
     #[test]
-    fn parses_agents_bucket() {
-        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
-        assert_eq!(reg.components.agents.len(), 1);
-    }
-
-    #[test]
-    fn profiles_preserve_file_order() {
-        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
+    fn real_registry_preserves_profile_order() {
+        let reg: Registry = serde_json::from_str(REAL_REGISTRY).expect("real registry parses");
         let keys: Vec<&str> = reg.profiles.keys().map(String::as_str).collect();
-        assert_eq!(keys, vec!["essential", "developer"]);
+        assert_eq!(
+            keys,
+            vec!["essential", "developer", "business", "full", "advanced"]
+        );
     }
 
     #[test]
-    fn component_dependencies_default_empty() {
-        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
+    fn real_registry_skill_has_files() {
+        let reg: Registry = serde_json::from_str(REAL_REGISTRY).expect("real registry parses");
+        let skill = reg
+            .components
+            .skills
+            .iter()
+            .find(|s| s.id == "task-management")
+            .unwrap();
+        assert_eq!(skill.files.len(), 3);
+    }
+
+    #[test]
+    fn real_registry_category_returns_agents() {
+        let reg: Registry = serde_json::from_str(REAL_REGISTRY).expect("real registry parses");
+        assert_eq!(Category::Agents.components(&reg).len(), 8);
+    }
+
+    // Inline edge cases the real registry can't express (no empty bucket,
+    // no component missing both optional fields).
+
+    #[test]
+    fn missing_optional_fields_default_empty() {
+        let reg: Registry = serde_json::from_str(
+            r#"{
+          "version": "1.0.0",
+          "profiles": {},
+          "components": {
+            "agents": [{ "id": "a", "name": "A", "path": "a.md" }]
+          }
+        }"#,
+        )
+        .expect("inline fixture parses");
         let agent = &reg.components.agents[0];
         assert!(agent.dependencies.is_empty());
-    }
-
-    #[test]
-    fn component_files_default_empty() {
-        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
-        let agent = &reg.components.agents[0];
         assert!(agent.files.is_empty());
     }
 
     #[test]
-    fn skill_component_files_present() {
-        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
-        let skill = &reg.components.skills[0];
-        assert_eq!(skill.files.len(), 1);
+    fn empty_profile_parses() {
+        let reg: Registry = serde_json::from_str(
+            r#"{
+          "version": "1.0.0",
+          "profiles": { "empty": { "name": "Empty", "components": [] } },
+          "components": {}
+        }"#,
+        )
+        .expect("inline fixture parses");
+        assert_eq!(reg.profiles["empty"].components.len(), 0);
     }
 
     #[test]
-    fn category_components_returns_agents() {
-        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
-        assert_eq!(Category::Agents.components(&reg).len(), 1);
-    }
-
-    #[test]
-    fn category_components_returns_empty_contexts() {
-        let reg: Registry = serde_json::from_str(FIXTURE).expect("fixture parses");
+    fn empty_bucket_returns_empty() {
+        let reg: Registry = serde_json::from_str(
+            r#"{
+          "version": "1.0.0",
+          "profiles": {},
+          "components": { "contexts": [] }
+        }"#,
+        )
+        .expect("inline fixture parses");
         assert_eq!(Category::Contexts.components(&reg).len(), 0);
     }
 

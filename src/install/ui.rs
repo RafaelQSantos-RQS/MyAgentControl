@@ -10,6 +10,7 @@
 //! pseudo-TTY integration run (see the validation notes in the task).
 
 use console::{Term, style};
+use dialoguer::theme::Theme;
 use dialoguer::{Confirm, Input, MultiSelect, Select};
 
 use crate::install::model::{Category, Component, Registry};
@@ -87,27 +88,43 @@ pub fn run(registry: &Registry, options: &Options) -> Result<()> {
     }
 }
 
-/// ASCII banner, matching the OAC installer header (Brick 1: compact).
+/// ASCII banner, matching the OAC installer header, centered on the
+/// terminal width.
 fn banner() {
+    const ART: &str = "
+███╗   ███╗██╗   ██╗     █████╗  ██████╗ ███████╗███╗   ██╗████████╗
+████╗ ████║╚██╗ ██╔╝    ██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝
+██╔████╔██║ ╚████╔╝     ███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║
+██║╚██╔╝██║  ╚██╔╝      ██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║
+██║ ╚═╝ ██║   ██║       ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║
+╚═╝     ╚═╝   ╚═╝       ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝
+
+ ██████╗ ██████╗ ███╗   ██╗████████╗██████╗  ██████╗ ██╗
+██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔══██╗██╔═══██╗██║
+██║     ██║   ██║██╔██╗ ██║   ██║   ██████╔╝██║   ██║██║
+██║     ██║   ██║██║╚██╗██║   ██║   ██╔══██╗██║   ██║██║
+╚██████╗╚██████╔╝██║ ╚████║   ██║   ██║  ██║╚██████╔╝███████╗
+ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+";
+
     let term = Term::stderr();
-    let _ = term.write_line(
-        &style("╔══════════════════════════════════════════════════════════╗")
-            .cyan()
-            .bold()
-            .to_string(),
-    );
-    let _ = term.write_line(
-        &style("║        MyAgentControl Installer v0.0.1                    ║")
-            .cyan()
-            .bold()
-            .to_string(),
-    );
-    let _ = term.write_line(
-        &style("╚══════════════════════════════════════════════════════════╝")
-            .cyan()
-            .bold()
-            .to_string(),
-    );
+    // `Term::size()` returns (rows, cols).
+    let (_, cols) = term.size();
+    // The ART lines differ in width (fmt strips their trailing padding), so
+    // normalize them to the widest line, then center the whole block with
+    // one shared pad. Centering per-line would misalign the artwork.
+    let art_lines: Vec<&str> = ART.lines().filter(|l| !l.trim().is_empty()).collect();
+    let art_width = art_lines
+        .iter()
+        .map(|l| l.chars().count())
+        .max()
+        .unwrap_or(0);
+    let pad = (cols as usize).saturating_sub(art_width) / 2;
+    for line in art_lines {
+        let padded = format!("{}{:<pad$}", " ".repeat(pad), line, pad = art_width);
+        let _ = term.write_line(&style(padded).cyan().bold().to_string());
+    }
+    let _ = term.write_line("");
 }
 
 /// Step 1 — installation location (OAC `show_install_location_menu`).
@@ -158,14 +175,39 @@ fn choose_profile(registry: &Registry) -> Result<String> {
         .map(|key| {
             let p = &registry.profiles[*key];
             let count = p.components.len();
+            let head = format!("{} — {} components", p.name, count);
             match &p.description {
-                Some(desc) => format!("{} — {} ({} components)", p.name, desc, count),
-                None => format!("{} ({} components)", p.name, count),
+                Some(desc) => format!("{head}\n{}", wrap(desc, PROFILE_DESC_WIDTH)),
+                None => head,
             }
         })
         .collect();
     let idx = select("Available installation profiles:", &items, 0)?;
     Ok(keys[idx].clone())
+}
+
+/// Max column width for a profile description line.
+const PROFILE_DESC_WIDTH: usize = 64;
+
+/// Word-wrap `text` to at most `width` columns, preserving words.
+fn wrap(text: &str, width: usize) -> String {
+    let mut out = String::new();
+    let mut line_len = 0usize;
+    for word in text.split_whitespace() {
+        let space = if line_len == 0 { 0 } else { 1 };
+        if line_len + space + word.len() > width {
+            out.push('\n');
+            out.push_str(word);
+            line_len = word.len();
+        } else {
+            if line_len > 0 {
+                out.push(' ');
+            }
+            out.push_str(word);
+            line_len += space + word.len();
+        }
+    }
+    out
 }
 
 /// Step 3b — custom component selection (OAC `show_custom_menu` + component
@@ -314,8 +356,57 @@ fn resolve_install_dir(location: &Location, options: &Options) -> String {
     }
 }
 
+/// Dialoguer theme for the installer menus: colored prompts (no trailing
+/// colon — the prompt strings already include it) and multi-line select
+/// items where the first line is the option name and following lines are
+/// its description.
+#[derive(Debug, Clone, Copy)]
+struct InstallerTheme;
+
+impl Theme for InstallerTheme {
+    fn format_prompt(&self, f: &mut dyn std::fmt::Write, prompt: &str) -> std::fmt::Result {
+        write!(f, "{}", style(prompt).bold().for_stderr())
+    }
+
+    fn format_select_prompt_selection(
+        &self,
+        f: &mut dyn std::fmt::Write,
+        prompt: &str,
+        sel: &str,
+    ) -> std::fmt::Result {
+        // `sel` may be a multi-line item; keep only its first line in the
+        // collapsed confirmation line. The prompt already ends with ':'.
+        let head = sel.split('\n').next().unwrap_or(sel);
+        write!(f, "{} {}", style(prompt).bold().for_stderr(), head)
+    }
+
+    fn format_select_prompt_item(
+        &self,
+        f: &mut dyn std::fmt::Write,
+        text: &str,
+        active: bool,
+    ) -> std::fmt::Result {
+        let mut lines = text.splitn(2, '\n');
+        let head = lines.next().unwrap_or_default();
+        let rest = lines.next();
+        if active {
+            write!(f, "{} ", style(">").cyan().bold().for_stderr())?;
+            write!(f, "{}", style(head).cyan().bold().for_stderr())?;
+        } else {
+            write!(f, "  {}", style(head).for_stderr())?;
+        }
+        if let Some(desc) = rest {
+            for line in desc.lines() {
+                writeln!(f)?;
+                write!(f, "    {}", style(line).dim().for_stderr())?;
+            }
+        }
+        Ok(())
+    }
+}
+
 fn select(prompt: &str, items: &[String], default: usize) -> Result<usize> {
-    Select::new()
+    Select::with_theme(&InstallerTheme)
         .with_prompt(prompt)
         .items(items)
         .default(default)
@@ -330,29 +421,6 @@ fn prompt_err(e: dialoguer::Error) -> InstallError {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn fixture_registry() -> Registry {
-        let json = r#"{
-          "profiles": {
-            "essential": {
-              "name": "Essential (Minimal)",
-              "description": "Minimal starter kit",
-              "components": ["agent:openagent", "subagent:task-manager"]
-            }
-          },
-          "components": {
-            "agents": [{"id": "openagent", "name": "OpenAgent", "path": "p", "description": "Universal agent"}],
-            "subagents": [{"id": "task-manager", "name": "TaskManager", "path": "p"}],
-            "contexts": [],
-            "skills": [],
-            "commands": [],
-            "tools": [],
-            "plugins": [],
-            "config": []
-          }
-        }"#;
-        serde_json::from_str(json).expect("fixture parses")
-    }
 
     #[test]
     fn preview_lines_groups_by_type() {
@@ -400,30 +468,6 @@ mod tests {
     }
 
     #[test]
-    fn category_helpers_count_agents() {
-        let reg = fixture_registry();
-        assert_eq!(Category::Agents.components(&reg).len(), 1);
-    }
-
-    #[test]
-    fn category_helpers_count_subagents() {
-        let reg = fixture_registry();
-        assert_eq!(Category::Subagents.components(&reg).len(), 1);
-    }
-
-    #[test]
-    fn category_helpers_empty_contexts() {
-        let reg = fixture_registry();
-        assert_eq!(Category::Contexts.components(&reg).len(), 0);
-    }
-
-    #[test]
-    fn category_helpers_first_agent_id() {
-        let reg = fixture_registry();
-        assert_eq!(Category::Agents.components(&reg)[0].id, "openagent");
-    }
-
-    #[test]
     fn resolve_install_dir_local() {
         let opts = Options {
             dir: ".opencode".to_string(),
@@ -442,5 +486,27 @@ mod tests {
             resolve_install_dir(&Location::Custom("/tmp/x".to_string()), &opts),
             "/tmp/x"
         );
+    }
+
+    #[test]
+    fn wrap_short_text_unchanged() {
+        assert_eq!(wrap("short text", 64), "short text");
+    }
+
+    #[test]
+    fn wrap_breaks_long_lines_at_width() {
+        let wrapped = wrap("one two three four", 8);
+        assert_eq!(wrapped, "one two\nthree\nfour");
+    }
+
+    #[test]
+    fn wrap_keeps_words_whole() {
+        let wrapped = wrap("a b c d", 3);
+        assert_eq!(wrapped, "a b\nc d");
+    }
+
+    #[test]
+    fn wrap_empty_text() {
+        assert_eq!(wrap("", 64), "");
     }
 }
