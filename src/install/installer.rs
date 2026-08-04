@@ -217,7 +217,7 @@ fn now_rfc3339() -> String {
 }
 
 /// A `.mac/manifest.json` entry per REG-7 §4.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ManifestEntry {
     pub r#type: String,
     pub installed_at: String,
@@ -225,7 +225,7 @@ pub struct ManifestEntry {
 }
 
 /// The full manifest document written to `<install_dir>/.mac/manifest.json`.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Manifest {
     pub mac_version: String,
     pub files: BTreeMap<String, ManifestEntry>,
