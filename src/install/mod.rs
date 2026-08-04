@@ -2,6 +2,7 @@
 //! Entry point: [`run`]. Loads the registry (embedded by default) then
 //! hands over to the TUI ([`ui`]).
 
+pub mod add;
 pub mod content;
 pub mod installer;
 pub mod model;

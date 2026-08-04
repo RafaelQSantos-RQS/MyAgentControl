@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
 
-use myagentcontrol::install::{self, Options, status};
+use myagentcontrol::install::{self, Options, add, status};
 
 /// The `myagentcontrol` CLI manages an `.opencode/`-compatible tree.
 #[derive(Debug, Parser)]
@@ -16,6 +16,8 @@ struct Cli {
 enum Command {
     /// Interactive installer (TUI only).
     Install(InstallArgs),
+    /// Install a component plus its dependencies into an existing tree.
+    Add(AddArgs),
     /// Compare the manifest against the install directory (read-only).
     Status(StatusArgs),
 }
@@ -28,6 +30,18 @@ struct InstallArgs {
     /// Override the embedded registry with a file on disk (advanced).
     #[arg(long)]
     registry: Option<PathBuf>,
+    /// Overwrite existing files instead of skipping them.
+    #[arg(long)]
+    force: bool,
+}
+
+#[derive(Debug, Args)]
+struct AddArgs {
+    /// Component to install, in `<type>:<id>` form (e.g. `context:quick-start`).
+    component: String,
+    /// Target directory for the managed tree.
+    #[arg(long, default_value = ".opencode")]
+    dir: String,
     /// Overwrite existing files instead of skipping them.
     #[arg(long)]
     force: bool,
@@ -49,6 +63,13 @@ fn main() {
             force: args.force,
         }) {
             Ok(()) => 0,
+            Err(err) => {
+                eprintln!("Error: {err}");
+                1
+            }
+        },
+        Command::Add(args) => match add::run(&args.component, &args.dir, args.force) {
+            Ok(code) => code,
             Err(err) => {
                 eprintln!("Error: {err}");
                 1

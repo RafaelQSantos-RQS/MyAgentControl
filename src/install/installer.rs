@@ -212,7 +212,7 @@ pub fn install(
 }
 
 /// RFC 3339 timestamp for `installed_at` (REG-7 §4).
-fn now_rfc3339() -> String {
+pub fn now_rfc3339() -> String {
     chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
 }
 
