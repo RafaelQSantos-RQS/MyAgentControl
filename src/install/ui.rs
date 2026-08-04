@@ -1,6 +1,7 @@
 //! Interactive installer TUI: banner → location → mode →
 //! (profile | custom) → preview → confirm. Menus are fed by the real
-//! registry ([`model::Registry`]); real install logic lands later.
+//! registry ([`model::Registry`]); confirmed selections run the real
+//! install via [`installer::install`].
 
 use std::path::Path;
 
