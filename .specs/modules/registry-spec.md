@@ -49,7 +49,7 @@ managed by the tool (see cli-spec §3).
   "categories": { "essential": "", "standard": "", "extended": "", "specialized": "", "meta": "" },
   "components": {
     "agents":     [ { "id": "system-builder", "name": "OpenSystemBuilder", "type": "agent",
-                       "path": ".opencode/agent/meta/system-builder.md",
+                       "path": "agent/meta/system-builder.md",
                        "description": "...", "tags": ["..."],
                        "dependencies": ["subagent:domain-analyzer", "..."],
                        "category": "meta" } ],
@@ -153,7 +153,7 @@ Markers (C16): `[OAC format]` validates a rule the registry schema declares;
   "id": "context-organizer",
   "name": "ContextOrganizer",
   "type": "subagent",
-  "path": ".opencode/agent/subagents/system-builder/context-organizer.md",
+  "path": "agent/subagents/system-builder/context-organizer.md",
   "description": "Organizes context files",
   "tags": ["context", "system-builder"],
   "dependencies": [],
@@ -164,7 +164,7 @@ Markers (C16): `[OAC format]` validates a rule the registry schema declares;
 ### 7.2 Invalid cases (each must be rejected)
 
 - `category: bogus` → error REG-201 (not in the enum)
-- `path: .opencode/agent/missing.md` → error REG-202 (path does not exist)
+- `path: agent/missing.md` → error REG-202 (path does not exist)
 - `dependencies: ["subagent:ghost"]` → error REG-203 (unknown subagent)
 - `profiles.essential.components: ["agent:unknown"]` → error REG-204 (profile ref unresolved)
 - Duplicate component id in a type → error REG-205

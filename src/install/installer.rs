@@ -82,8 +82,8 @@ fn expand_one<'r>(
 }
 
 /// Plan every file to copy for `selection`: the component `path` plus each
-/// `files` entry, mapped from the `.opencode/` root prefix to a relative
-/// path (embedded source) and a target under `install_dir`.
+/// `files` entry. Paths are root-relative (e.g. `agent/core/openagent.md`);
+/// a legacy `.opencode/` prefix is tolerated and stripped.
 pub fn plan_files(
     registry: &Registry,
     selection: &[String],
@@ -98,12 +98,10 @@ pub fn plan_files(
             continue;
         };
         for rel in std::iter::once(&comp.path).chain(comp.files.iter()) {
-            let Some(stripped) = rel.strip_prefix(".opencode/") else {
-                continue;
-            };
+            let rel = rel.strip_prefix(".opencode/").unwrap_or(rel);
             planned.push(PlannedFile {
-                rel: PathBuf::from(stripped),
-                target: install_dir.join(stripped),
+                rel: PathBuf::from(rel),
+                target: install_dir.join(rel),
                 kind: kind.to_string(),
             });
         }
@@ -266,7 +264,7 @@ mod tests {
         let reg: Registry = serde_json::from_str(include_str!("../../content/registry.json"))
             .expect("registry parses");
         let comp = resolve_component(&reg, "agent", "openagent").expect("known");
-        assert_eq!(comp.path, ".opencode/agent/core/openagent.md");
+        assert_eq!(comp.path, "agent/core/openagent.md");
     }
 
     #[test]
@@ -299,6 +297,29 @@ mod tests {
         let sel = vec!["agent:system-builder".to_string()];
         let expanded = expand_dependencies(&reg, &sel);
         assert!(expanded.contains(&"agent:system-builder".to_string()));
+    }
+
+    #[test]
+    fn plan_files_tolerates_legacy_opencode_prefix() {
+        // Pre-fix registries hardcoded the `.opencode/` root prefix in every
+        // path; the planner must still map them to the content root.
+        let json = r#"{
+            "version": "2.0.0",
+            "profiles": {},
+            "components": {
+                "agents": [{
+                    "id": "legacy", "name": "Legacy", "type": "agent",
+                    "path": ".opencode/agent/legacy.md",
+                    "description": "", "tags": [], "dependencies": [],
+                    "category": "standard"
+                }]
+            }
+        }"#;
+        let reg: Registry = serde_json::from_str(json).expect("registry parses");
+        let planned = plan_files(&reg, &["agent:legacy".to_string()], Path::new("/tmp/x"));
+        assert_eq!(planned.len(), 1);
+        assert_eq!(planned[0].rel, Path::new("agent/legacy.md"));
+        assert_eq!(planned[0].target, Path::new("/tmp/x/agent/legacy.md"));
     }
 
     #[test]

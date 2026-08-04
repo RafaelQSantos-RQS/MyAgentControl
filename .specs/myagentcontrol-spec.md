@@ -82,7 +82,7 @@ The user, a Rust enthusiast who uses many different AI models, wants a **Rust re
 │            .opencode/ (markdown + config, OAC-compatible)    │
 │  agent/  subagents/  skills/  command/  context/  profiles/  │
 │  prompts/  tool/  plugin/  plugins/  docs/  config.json      │
-│  opencode.json  scripts/  config/                            │
+│  scripts/  config/                                           │
 └──────────────────────────────────────────────────────────────┘
                 │ read by (not invoked by us)
                 ▼
@@ -142,7 +142,7 @@ The user, a Rust enthusiast who uses many different AI models, wants a **Rust re
 | `plugin/` | `agent-validator.ts`, `notify.ts`, `tests/`, `docs/`, `package.json` |
 | `plugins/` | `coder-verification/` |
 | `docs/` | `agents/`, `guides/`, `workflows/` |
-| `config.json`, `opencode.json`, `config/agent-metadata.json` | root config files |
+| `config.json`, `config/agent-metadata.json` | root config files |
 | `scripts/` | `task-cli.ts` |
 | `registry.json` | component registry (agents/subagents/commands/skills/contexts/tools/plugins/configs + profiles); validated per [`modules/registry-spec.md`](./modules/registry-spec.md) |
 

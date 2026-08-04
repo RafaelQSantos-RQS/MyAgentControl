@@ -128,7 +128,7 @@ These appear in the vendored `content/` tree but have no dedicated module spec. 
 | `plugins/` (coder-verification/) | Scaffold as-is |
 | `docs/` (agents/, guides/, workflows/) | Scaffold as-is |
 | `scripts/` (task-cli.ts) | Scaffold as-is; validate referenced script paths exist |
-| `config.json`, `opencode.json`, `config/agent-metadata.json` | Scaffold as-is; validate well-formed JSON |
+| `config.json`, `config/agent-metadata.json` | Scaffold as-is; validate well-formed JSON |
 
 > **Managed scope:** reference checks in this table (profiles → agents/commands/context, scripts → referenced paths) are `[tool DX]` consistency checks under C16; the vendored tree satisfies them.
 >
@@ -182,7 +182,7 @@ Given/When/Then form per constitution C10.
 - **AC-L4** Given a valid run, **when** `list --format json` emits, **then** the output validates against a committed JSON schema.
 - **AC-L5** Given the codebase, **when** `cargo test`, `cargo clippy -D warnings`, and `cargo fmt --check` run, **then** all pass with zero warnings.
 - **AC-L6** Given the built binary, **when** it runs on a machine without node/bun, **then** it works (NFR5).
-- **AC-L7** Given a `config.json`/`opencode.json` with invalid JSON or a profile referencing a nonexistent agent, **when** `validate --all` runs, **then** it fails, naming the broken entry.
+- **AC-L7** Given a `config.json` with invalid JSON or a profile referencing a nonexistent agent, **when** `validate --all` runs, **then** it fails, naming the broken entry.
 - **AC-L8** Given the scaffolded tree, **when** the ancillary walk test runs on `profiles/`, `prompts/`, `tool/`, `plugin/`, `plugins/`, `docs/`, `scripts/` trees, **then** the structure is validated (source artifacts verbatim).
 - **AC-L9** Given an installed tree with a user-modified file, **when** `status` and `update --check` run, **then** the modified file is reported (never silently overwritten); **when** `add context:<id>` runs for a valid registry component, **then** the component and its dependencies install and the manifest records them.
 
