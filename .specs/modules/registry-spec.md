@@ -27,7 +27,7 @@ depends_on: [MAC-MASTER, MAC-CTX, MAC-AG, MAC-SK, MAC-CMD]
 OAC's "component management" spine is a **registry**: a JSON catalog of every
 agent, subagent, command, skill, context file, tool, plugin, and config in the
 tree, plus named **profiles** that select component sets. Alongside it lives an
-**install state** (`.oac/manifest.json`) that tracks what is installed, its
+**install state** (`<install_dir>/.mac/manifest.json`) that tracks what is installed, its
 SHA256 hash, and whether the user modified it.
 
 Our Rust tool implements the *file-based, agnostic* side of this: validate the
@@ -88,16 +88,16 @@ Reference counts (OAC v0.7.1): 8 agents, 19 subagents, 17 commands, 4 skills,
    existing component (`agent:<id>`, `context:<id>`, `skill:<id>`, ...).
 6. **Uniqueness**: component `id`s are unique per type.
 
-## 4. Install State (`.oac/manifest.json`, tool DX)
+## 4. Install State (`<install_dir>/.mac/manifest.json`, tool DX)
 
-The tool maintains a manifest in the target project to make installs
-trustworthy and idempotent:
+The tool maintains a manifest **inside the install directory** to make
+installs trustworthy and idempotent:
 
 ```json
 {
-  "oac_version": "0.0.2",
+  "mac_version": "0.0.2",
   "files": {
-    ".opencode/agent/core/opencoder.md": {
+    "agent/core/opencoder.md": {
       "type": "agent",
       "installed_at": "2026-08-03T...",
       "sha256": "abc..."
@@ -106,6 +106,7 @@ trustworthy and idempotent:
 }
 ```
 
+- Paths are relative to the install directory (the managed tree root).
 - `type` ∈ {agent, context, skill, config, other}.
 - **User-modified detection**: on `status`/`update`, compare disk hash against
   the manifest hash; a mismatch means the user edited the file.
@@ -138,7 +139,7 @@ Markers (C16): `[OAC format]` validates a rule the registry schema declares;
 - **REG-4** `[tool DX]` Validate profile coverage (profiles reference existing components).
 - **REG-5** `[tool DX]` Auto-detect: scan the managed tree for unregistered components and report them (never silently mutate).
 - **REG-6** `[tool DX]` `add <type>:<id>` installs a component with transitive dependency resolution, non-destructive.
-- **REG-7** `[tool DX]` Maintain `.oac/manifest.json`: SHA256 per installed file, type classification, installed-at.
+- **REG-7** `[tool DX]` Maintain `<install_dir>/.mac/manifest.json`: SHA256 per installed file, type classification, installed-at.
 - **REG-8** `[tool DX]` `status` compares manifest vs disk: report modified, added, and removed files with a diff summary.
 - **REG-9** `[tool DX]` `update` applies bundle changes, preserves user-modified files (backup + report), supports `--check`/dry-run.
 - **REG-10** `[tool DX]` `install --profile <name>` installs a named profile's component set; collision detection on every copy.

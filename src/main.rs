@@ -23,9 +23,12 @@ struct InstallArgs {
     /// Target directory for the managed tree.
     #[arg(long, default_value = ".opencode")]
     dir: String,
-    /// Path to the component registry (defaults to the vendored copy).
-    #[arg(long, default_value = "content/registry.json")]
-    registry: PathBuf,
+    /// Override the embedded registry with a file on disk (advanced).
+    #[arg(long)]
+    registry: Option<PathBuf>,
+    /// Overwrite existing files instead of skipping them.
+    #[arg(long)]
+    force: bool,
 }
 
 fn main() {
@@ -34,6 +37,7 @@ fn main() {
         Command::Install(args) => install::run(&Options {
             dir: args.dir,
             registry_path: args.registry,
+            force: args.force,
         }),
     };
     if let Err(err) = result {

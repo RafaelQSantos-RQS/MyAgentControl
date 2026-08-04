@@ -2,12 +2,14 @@
 //! (profile | custom) → preview → confirm. Menus are fed by the real
 //! registry ([`model::Registry`]); real install logic lands later.
 
+use std::path::Path;
+
 use console::{Term, style};
 use dialoguer::theme::Theme;
 use dialoguer::{Confirm, Input, MultiSelect, Select};
 
 use crate::install::model::{Category, Component, Registry};
-use crate::install::{InstallError, Options, Result};
+use crate::install::{InstallError, Options, Result, installer};
 
 /// Dracula accent colors, fixed truecolor so the TUI looks the same
 /// regardless of the terminal theme (ANSI 16 slots vary per terminal).
@@ -73,14 +75,14 @@ pub fn run(registry: &Registry, options: &Options) -> Result<()> {
                     InstallError::Prompt(format!("unknown profile {profile_key:?}"))
                 })?;
                 if preview_and_confirm(&install_dir, &profile_key, &profile.components)? {
-                    placeholder_install(&install_dir);
+                    do_install(registry, options, &install_dir, &profile.components)?;
                 }
                 return Ok(());
             }
             Mode::Custom => {
                 let selection = choose_custom(registry)?;
                 if preview_and_confirm(&install_dir, "Custom", &selection)? {
-                    placeholder_install(&install_dir);
+                    do_install(registry, options, &install_dir, &selection)?;
                 }
                 return Ok(());
             }
@@ -303,23 +305,27 @@ fn preview_lines(selection: &[String]) -> Vec<String> {
         .collect()
 }
 
-/// Step 5 placeholder — real install lands in a later stage.
-fn placeholder_install(dir: &str) {
+/// Run the real install for a confirmed selection and print the summary.
+fn do_install(
+    registry: &Registry,
+    options: &Options,
+    install_dir: &str,
+    selection: &[String],
+) -> Result<()> {
+    let summary = installer::install(registry, selection, Path::new(install_dir), options.force)?;
     let term = Term::stderr();
     let _ = term.write_line("");
     let _ = term.write_line(
-        &style("✔ Ready to install — copy step lands in the next stage.")
-            .fg(palette::GREEN)
-            .for_stderr()
-            .to_string(),
+        &style(format!(
+            "✔ Installed {} file(s) — {} skipped, {} collision(s)",
+            summary.copied, summary.skipped, summary.collided
+        ))
+        .fg(palette::GREEN)
+        .for_stderr()
+        .to_string(),
     );
-    let _ = term.write_line(&format!("  Target: {dir}"));
-    let _ = term.write_line(
-        &style("  (Nothing was written; the interactive flow is the point.)")
-            .fg(palette::MUTED)
-            .for_stderr()
-            .to_string(),
-    );
+    let _ = term.write_line(&format!("  Manifest: {}/.mac/manifest.json", install_dir));
+    Ok(())
 }
 
 /// `list` mode: dump available components per category (OAC `list_components`).
@@ -471,7 +477,8 @@ mod tests {
     fn resolve_install_dir_local() {
         let opts = Options {
             dir: ".opencode".to_string(),
-            registry_path: std::path::PathBuf::from("content/registry.json"),
+            registry_path: None,
+            force: false,
         };
         assert_eq!(resolve_install_dir(&Location::Local, &opts), ".opencode");
     }
@@ -480,7 +487,8 @@ mod tests {
     fn resolve_install_dir_custom() {
         let opts = Options {
             dir: ".opencode".to_string(),
-            registry_path: std::path::PathBuf::from("content/registry.json"),
+            registry_path: None,
+            force: false,
         };
         assert_eq!(
             resolve_install_dir(&Location::Custom("/tmp/x".to_string()), &opts),
