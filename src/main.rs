@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
 
-use myagentcontrol::install::{self, Options, add, status};
+use myagentcontrol::install::{self, Options, add, remove, status};
 
 /// The `myagentcontrol` CLI manages an `.opencode/`-compatible tree.
 #[derive(Debug, Parser)]
@@ -18,6 +18,8 @@ enum Command {
     Install(InstallArgs),
     /// Install a component plus its dependencies into an existing tree.
     Add(AddArgs),
+    /// Uninstall a component's tracked files from an existing tree.
+    Remove(RemoveArgs),
     /// Compare the manifest against the install directory (read-only).
     Status(StatusArgs),
 }
@@ -48,6 +50,18 @@ struct AddArgs {
 }
 
 #[derive(Debug, Args)]
+struct RemoveArgs {
+    /// Component to remove, in `<type>:<id>` form (e.g. `context:quick-start`).
+    component: String,
+    /// Target directory for the managed tree.
+    #[arg(long, default_value = ".opencode")]
+    dir: String,
+    /// Remove files even if the user modified them.
+    #[arg(long)]
+    force: bool,
+}
+
+#[derive(Debug, Args)]
 struct StatusArgs {
     /// Target directory for the managed tree.
     #[arg(long, default_value = ".opencode")]
@@ -69,6 +83,13 @@ fn main() {
             }
         },
         Command::Add(args) => match add::run(&args.component, &args.dir, args.force) {
+            Ok(code) => code,
+            Err(err) => {
+                eprintln!("Error: {err}");
+                1
+            }
+        },
+        Command::Remove(args) => match remove::run(&args.component, &args.dir, args.force) {
             Ok(code) => code,
             Err(err) => {
                 eprintln!("Error: {err}");

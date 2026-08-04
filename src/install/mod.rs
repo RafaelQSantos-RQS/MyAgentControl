@@ -7,6 +7,7 @@ pub mod content;
 pub mod installer;
 pub mod model;
 pub mod registry;
+pub mod remove;
 pub mod status;
 pub mod ui;
 

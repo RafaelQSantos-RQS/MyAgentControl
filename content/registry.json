@@ -3119,7 +3119,7 @@
         "id": "env-example",
         "name": "Environment Template",
         "type": "config",
-        "path": "env.example",
+        "path": ".opencode/config/env.example",
         "description": "Example environment configuration file",
         "tags": [
           "config",
@@ -3147,7 +3147,7 @@
         "id": "readme",
         "name": "README",
         "type": "config",
-        "path": "README.md",
+        "path": ".opencode/config/README.md",
         "description": "Project documentation and setup guide",
         "tags": [
           "documentation",

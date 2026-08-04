@@ -114,6 +114,8 @@ mod tests {
     use super::*;
     use std::fs;
 
+    use crate::install::model::Category;
+
     fn temp_dir(name: &str) -> std::path::PathBuf {
         let dir =
             std::env::temp_dir().join(format!("myagentcontrol-add-{}-{name}", std::process::id()));
@@ -177,13 +179,36 @@ mod tests {
     }
 
     #[test]
-    fn add_component_without_installable_files_is_error() {
-        let dir = temp_dir("no-files");
-        // env-example's registry path lacks the .opencode/ prefix and has no
-        // vendored file, so it plans zero files.
-        let err = add_component(&real_registry(), "config:env-example", &dir, false)
-            .expect_err("no files should error");
-        assert!(err.to_string().contains("no installable files"));
+    fn every_registry_component_has_installable_files() {
+        // Data-integrity guard: every component's `path` + `files` must map
+        // to a real file in the embedded content tree (REG-2 validation).
+        // Catches broken registry entries like the old env-example/readme
+        // paths that lacked the .opencode/ prefix and a vendored file.
+        let reg = real_registry();
+        let mut checked = 0usize;
+        for cat in Category::ALL {
+            for comp in cat.components(&reg) {
+                let selection = format!("{}:{}", cat.type_key(), comp.id);
+                let planned = plan_files(
+                    &reg,
+                    std::slice::from_ref(&selection),
+                    std::path::Path::new("/tmp/integrity"),
+                );
+                assert!(
+                    !planned.is_empty(),
+                    "component {selection} has no installable files"
+                );
+                for file in &planned {
+                    assert!(
+                        content::read(&file.rel).is_some(),
+                        "missing embedded content for {selection}: {}",
+                        file.rel.display()
+                    );
+                }
+                checked += 1;
+            }
+        }
+        assert!(checked >= 100, "checked only {checked} components");
     }
 
     #[test]
