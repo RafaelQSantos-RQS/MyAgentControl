@@ -3,7 +3,9 @@ use std::path::{Path, PathBuf};
 use clap::{Args, Parser, Subcommand};
 
 use myagentcontrol::context;
+use myagentcontrol::evals as evals_mod;
 use myagentcontrol::install::{self, Options, add, remove, status};
+use myagentcontrol::validation;
 
 /// Manage an OpenCode-compatible agent tree: install components from an
 /// embedded registry, track them in a manifest, and keep the tree in sync.
@@ -131,6 +133,18 @@ struct ValidateArgs {
     /// Validate only context files.
     #[arg(long)]
     context: bool,
+    /// Validate agent files (schema, categories, delegation graph).
+    #[arg(long)]
+    agents: bool,
+    /// Validate skill files (SKILL.md, router.sh, structure).
+    #[arg(long)]
+    skills: bool,
+    /// Validate command files (frontmatter, dependencies).
+    #[arg(long)]
+    commands: bool,
+    /// Validate eval cases (YAML schema, results, dashboard).
+    #[arg(long)]
+    evals: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -189,7 +203,9 @@ fn main() {
         },
         Command::Validate(args) => {
             let root = Path::new(&args.dir);
-            match run_validate(root, args.context) {
+            let has_filters =
+                args.context || args.agents || args.skills || args.commands || args.evals;
+            match run_validate(root, &args, has_filters) {
                 Ok(()) => 0,
                 Err(err) => {
                     eprintln!("Error: {err}");
@@ -220,7 +236,11 @@ fn main() {
     std::process::exit(exit_code);
 }
 
-fn run_validate(root: &Path, context_only: bool) -> Result<(), Box<dyn std::error::Error>> {
+fn run_validate(
+    root: &Path,
+    args: &ValidateArgs,
+    has_filters: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     use myagentcontrol::context::frontmatter;
     use myagentcontrol::context::mvi;
     use myagentcontrol::context::resolver::{self, FsGlob};
@@ -273,7 +293,7 @@ fn run_validate(root: &Path, context_only: bool) -> Result<(), Box<dyn std::erro
     }
 
     // Walk agent/command files for @-references (unless context_only)
-    if !context_only {
+    if !args.context && !has_filters {
         use myagentcontrol::context::references;
         for dir_name in &["agent", "command"] {
             let dir = root.join(dir_name);
@@ -294,6 +314,34 @@ fn run_validate(root: &Path, context_only: bool) -> Result<(), Box<dyn std::erro
         }
     }
 
+    // Validate agents (--agents or no filters when no --context)
+    if (args.agents || (!has_filters && !args.context))
+        && let Err(e) = validate_agents(root, &mut errors)
+    {
+        errors.push(format!("agent validation: {e}"));
+    }
+
+    // Validate skills (--skills or no filters)
+    if (args.skills || (!has_filters && !args.context))
+        && let Err(e) = validate_skills(root, &mut errors)
+    {
+        errors.push(format!("skill validation: {e}"));
+    }
+
+    // Validate commands (--commands or no filters)
+    if (args.commands || (!has_filters && !args.context))
+        && let Err(e) = validate_commands(root, &mut errors)
+    {
+        errors.push(format!("command validation: {e}"));
+    }
+
+    // Validate evals (--evals or no filters)
+    if (args.evals || (!has_filters && !args.context))
+        && let Err(e) = validate_evals(root, &mut errors)
+    {
+        errors.push(format!("eval validation: {e}"));
+    }
+
     if errors.is_empty() {
         println!("All checks passed");
         Ok(())
@@ -303,6 +351,142 @@ fn run_validate(root: &Path, context_only: bool) -> Result<(), Box<dyn std::erro
         }
         Err(format!("{} validation errors", errors.len()).into())
     }
+}
+
+fn validate_agents(
+    root: &Path,
+    errors: &mut Vec<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use std::collections::HashMap;
+    let content_dir = root;
+    let agent_dir = content_dir.join("agent");
+    if !agent_dir.exists() {
+        return Ok(());
+    }
+    validate_agents_recursive(&agent_dir, errors, &mut HashMap::new())?;
+    // Check delegation graph
+    let mut edges = HashMap::new();
+    build_delegation_edges(&agent_dir, &mut edges);
+    validation::agents::validate_delegation_graph(&edges)
+        .map_err(|e| {
+            errors.push(format!("{e}"));
+        })
+        .ok();
+    Ok(())
+}
+
+fn validate_agents_recursive(
+    dir: &Path,
+    errors: &mut Vec<String>,
+    edges: &mut std::collections::HashMap<String, Vec<String>>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    for entry in std::fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            validate_agents_recursive(&path, errors, edges)?;
+        } else if path.extension().and_then(|e| e.to_str()) == Some("md") {
+            let content = std::fs::read_to_string(&path)?;
+            match validation::agents::validate_agent_file(&content) {
+                Ok(fm) => {
+                    if let Some(name) = fm.get("name").and_then(|v| v.as_str()) {
+                        let invokes = validation::optional_str_list(&fm, "invokes");
+                        edges.insert(name.to_string(), invokes);
+                    }
+                }
+                Err(e) => errors.push(format!("{}: {}", path.display(), e)),
+            }
+        } else if path.file_name().and_then(|s| s.to_str()) == Some("0-category.json") {
+            let content = std::fs::read_to_string(&path)?;
+            if let Err(e) = validation::agents::parse_category_json(&content, &path) {
+                errors.push(format!("{}: {}", path.display(), e));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn build_delegation_edges(dir: &Path, edges: &mut std::collections::HashMap<String, Vec<String>>) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                build_delegation_edges(&path, edges);
+            } else if path.extension().and_then(|e| e.to_str()) == Some("md")
+                && let Ok(content) = std::fs::read_to_string(&path)
+                && let Ok(fm) = validation::parse_frontmatter(&content)
+                && let Some(name) = fm.get("name").and_then(|v| v.as_str())
+            {
+                let invokes = validation::optional_str_list(&fm, "invokes");
+                edges.insert(name.to_string(), invokes);
+            }
+        }
+    }
+}
+
+fn validate_skills(
+    root: &Path,
+    errors: &mut Vec<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let skills = validation::skills::walk_skills(root);
+    for skill in &skills {
+        let skill_dir = root.join("skills").join(skill);
+        match validation::skills::validate_structure(&skill_dir) {
+            Ok(()) => {}
+            Err(e) => {
+                errors.push(format!("skill {skill}: {e}"));
+                continue;
+            }
+        }
+        let skill_md = skill_dir.join("SKILL.md");
+        if let Ok(content) = std::fs::read_to_string(&skill_md) {
+            if let Err(e) = validation::skills::validate_skill_file(&content) {
+                errors.push(format!("skill {skill}: {e}"));
+            }
+            let ref_errors = validation::skills::validate_referenced_files(&content, &skill_dir);
+            for e in ref_errors {
+                errors.push(format!("skill {skill}: {e}"));
+            }
+        }
+        if let Err(e) = validation::skills::validate_router(&skill_dir) {
+            errors.push(format!("skill {skill}: {e}"));
+        }
+    }
+    Ok(())
+}
+
+fn validate_commands(
+    root: &Path,
+    errors: &mut Vec<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let commands = validation::commands::walk_commands(root);
+    for cmd in &commands {
+        let cmd_file = root.join("command").join(format!("{cmd}.md"));
+        if let Ok(content) = std::fs::read_to_string(&cmd_file) {
+            match validation::commands::validate_command_file(&content) {
+                Ok(fm) => {
+                    let dep_errors = validation::commands::validate_dependencies(&fm);
+                    for e in dep_errors {
+                        errors.push(format!("command {cmd}: {e}"));
+                    }
+                }
+                Err(e) => errors.push(format!("command {cmd}: {e}")),
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_evals(root: &Path, errors: &mut Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+    let evals_dir = root.parent().unwrap_or(root).join("openspec").join("evals");
+    let cases = evals_mod::parse_cases(&evals_dir);
+    for case in cases {
+        match case {
+            Ok(_) => {}
+            Err(e) => errors.push(format!("eval: {e}")),
+        }
+    }
+    Ok(())
 }
 
 fn run_add_context(root: &Path, update: bool) -> Result<(), Box<dyn std::error::Error>> {
