@@ -35,6 +35,7 @@ but not yet implemented.
 | `remove <type>:<id>` | Remove a component's tracked files and update the manifest. |
 | `status` | Compare the manifest against the install directory; reports modified, removed, and added files. |
 | `validate` | Validate context files (MVI, frontmatter, @-references). |
+| `list` | List available components from the registry. |
 | `wizard add-context` | Interactive wizard for creating or updating a context file. |
 
 Every command accepts `--dir` to target a custom tree root (default:

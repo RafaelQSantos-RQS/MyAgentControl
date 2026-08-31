@@ -71,6 +71,12 @@ enum Command {
                       or context file.\n\nRequires an interactive terminal."
     )]
     Wizard(WizardArgs),
+    /// List available components from the registry.
+    #[command(
+        long_about = "Print all available components grouped by category, with their IDs.\n\n\
+                      Reads from the embedded registry (442 files, OAC v0.7.1 as starting point)."
+    )]
+    List,
 }
 
 #[derive(Debug, Args)]
@@ -203,6 +209,13 @@ fn main() {
                 }
             }
         },
+        Command::List => match run_list() {
+            Ok(()) => 0,
+            Err(err) => {
+                eprintln!("Error: {err}");
+                1
+            }
+        },
     };
     std::process::exit(exit_code);
 }
@@ -301,5 +314,16 @@ fn run_add_context(root: &Path, update: bool) -> Result<(), Box<dyn std::error::
         let path = context::wizard::write_context_file(root, &answers, "1.0")?;
         println!("Created: {}", path.display());
     }
+    Ok(())
+}
+
+fn run_list() -> Result<(), Box<dyn std::error::Error>> {
+    use myagentcontrol::install::content;
+    use myagentcontrol::install::model::Registry;
+    use myagentcontrol::install::ui::list_components_plain;
+
+    let registry: Registry = serde_json::from_str(content::registry_json())
+        .map_err(|e| format!("failed to parse embedded registry: {e}"))?;
+    list_components_plain(&registry);
     Ok(())
 }

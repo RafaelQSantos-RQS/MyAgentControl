@@ -329,25 +329,24 @@ fn do_install(
     Ok(())
 }
 
-/// `list` mode: dump available components per category (OAC `list_components`).
-fn list_components(registry: &Registry) -> Result<()> {
-    let term = Term::stderr();
-    let _ = term.write_line(&style("\nAvailable Components").bold().to_string());
+/// Print available components per category to stdout (no TUI, no keypress).
+pub fn list_components_plain(registry: &Registry) {
+    println!("\nAvailable Components");
     for cat in Category::ALL {
         let comps = cat.components(registry);
         if comps.is_empty() {
             continue;
         }
-        let _ = term.write_line(
-            &style(format!("{} ({}):", cat.label(), comps.len()))
-                .fg(palette::PURPLE)
-                .for_stderr()
-                .to_string(),
-        );
+        println!("{} ({}):", cat.label(), comps.len());
         for comp in comps {
-            let _ = term.write_line(&format!("  {} — {}", comp.name, comp.id));
+            println!("  {} — {}", comp.name, comp.id);
         }
     }
+}
+
+/// `list` mode: dump available components per category (OAC `list_components`).
+fn list_components(registry: &Registry) -> Result<()> {
+    list_components_plain(registry);
     let _ = Term::stdout()
         .read_line()
         .map_err(|e| InstallError::Prompt(e.to_string()))?;
