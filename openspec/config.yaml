@@ -1,32 +1,30 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Project: myagentcontrol — Rust reimplementation of OpenAgentsControl (OAC v0.7.1)
+  License: MIT + attribution to OpenAgentsControl
+  Spec-Driven Development: no implementation without approved spec
+  Specs written in English; modular (one master + one per module)
+  Acceptance criteria in Given/When/Then form
+  Quality gates: cargo test, cargo clippy -- -D warnings, cargo fmt --check, zero unsafe
+  Managed format: markdown + YAML frontmatter (byte-compatible with OpenCode)
+  The binary is a configuration manager — never executes agents or calls model APIs
+  Model-agnosticism: delegate execution to user's chosen CLI
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - Keep proposals under 500 words
+    - Always include a "Non-goals" section
+  tasks:
+    - Break tasks into chunks of max 2 hours
+    - Each task must be verifiable
+  specs:
+    - Use SHALL/MUST for normative requirements (avoid should/may)
+    - Every requirement MUST have at least one scenario
+    - Use WHEN/THEN format for scenarios
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+operations:
+  archive:
+    guidance:
+      - Summarize the archive outcome before finishing
+      - Verify all capability directories exist after archive
