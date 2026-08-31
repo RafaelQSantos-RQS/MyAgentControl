@@ -1,4 +1,3 @@
-pub mod cache;
 pub mod frontmatter;
 pub mod mvi;
 pub mod references;

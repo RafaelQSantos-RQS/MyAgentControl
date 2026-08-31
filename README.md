@@ -21,10 +21,10 @@ OpenCode CLI the user already relies on.
 
 ## Status
 
-Pre-v1. The `install`, `add`, `remove`, and `status` commands are
-implemented against the real embedded registry (442 files, OAC v0.7.1 as
-starting point). `validate`, `list`, wizards, and the eval framework are
-specified but not yet implemented.
+Pre-v1. The `install`, `add`, `remove`, `status`, `validate`, and `wizard`
+commands are implemented against the real embedded registry (442 files,
+OAC v0.7.1 as starting point). `list` and the eval framework are specified
+but not yet implemented.
 
 ## Commands
 
@@ -34,6 +34,8 @@ specified but not yet implemented.
 | `add <type>:<id>` | Install a component plus its transitive dependencies into an existing tree. |
 | `remove <type>:<id>` | Remove a component's tracked files and update the manifest. |
 | `status` | Compare the manifest against the install directory; reports modified, removed, and added files. |
+| `validate` | Validate context files (MVI, frontmatter, @-references). |
+| `wizard add-context` | Interactive wizard for creating or updating a context file. |
 
 Every command accepts `--dir` to target a custom tree root (default:
 `.opencode`). Installed files are tracked by SHA256 in a manifest
@@ -88,15 +90,14 @@ result drop-in compatible with OpenCode while staying model-agnostic.
 |---|---|
 | `src/` | Rust crate: `main.rs` (CLI) + `install/` module (installer, registry, manifest, add/remove/status) |
 | `content/` | Vendored OAC-compatible tree (agents, subagents, skills, commands, context, registry, config) |
-| `.specs/` | Spec-Driven Development docs: constitution, master spec, module specs, ADRs |
+| `openspec/specs/` | Spec-Driven Development docs: constitution, master spec, module specs |
 | `NOTICE.md` | OAC v0.7.1 attribution and divergence policy |
 | `LICENSE` | MIT |
 
 ## Development
 
 - Specs are the source of truth: code is written only after a spec is
-  approved (see [`.specs/README.md`](./.specs/README.md) for the lifecycle
-  and change-request process).
+  approved (see `openspec/` for the lifecycle and change-request process).
 - Quality gates: `cargo test`, `cargo clippy -- -D warnings`,
   `cargo fmt --check`, no unsafe code.
 - The `content/` tree is maintained in-repo and validated by always-on walk

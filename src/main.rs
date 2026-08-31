@@ -210,8 +210,27 @@ fn main() {
 fn run_validate(root: &Path, context_only: bool) -> Result<(), Box<dyn std::error::Error>> {
     use myagentcontrol::context::frontmatter;
     use myagentcontrol::context::mvi;
+    use myagentcontrol::context::resolver::{self, FsGlob};
 
-    let context_dir = root.join("context");
+    // Resolve context root using local-first, global-fallback logic
+    let home = std::env::var("HOME").ok().map(std::path::PathBuf::from);
+    let global = home.map(|h| h.join(".config/opencode"));
+    let resolved = resolver::resolve(root, global.as_deref(), None, &FsGlob);
+
+    let context_dir = match &resolved {
+        resolver::CoreRoot::Local(path) => path.join("context"),
+        resolver::CoreRoot::GlobalForCore { local, global_core } => {
+            // Prefer local context, fall back to global core
+            let local_ctx = local.join("context");
+            if local_ctx.exists() {
+                local_ctx
+            } else {
+                global_core.join("context")
+            }
+        }
+        resolver::CoreRoot::LocalOnly(path) => path.join("context"),
+    };
+
     if !context_dir.exists() {
         return Err("context directory not found".into());
     }
