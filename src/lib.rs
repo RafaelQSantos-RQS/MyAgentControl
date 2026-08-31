@@ -1,5 +1,6 @@
 //! `myagentcontrol` library crate.
 //!
-//! Exposes the installer modules used by the binary in `src/main.rs`.
+//! Exposes the installer and context modules used by the binary in `src/main.rs`.
 
+pub mod context;
 pub mod install;
